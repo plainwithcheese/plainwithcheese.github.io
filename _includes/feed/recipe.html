@@ -1,0 +1,19 @@
+{%- comment -%}
+  Feed version of format-recipe.html (feed.xml): the recipe card's premise,
+  serves, ingredients and method, then the license notice from
+  _data/license.yml, with the same labels as on the page.
+
+  Param: post
+{%- endcomment -%}
+{%- assign fr = include.post -%}
+{%- assign fr_lic = site.data.license -%}
+<p><strong>Premise</strong></p>{{ fr.premise | markdownify }}
+<p><strong>Serves</strong> {{ fr.serves }}</p>
+<p><strong>Ingredients</strong></p>
+<ul>
+  {%- for ing in fr.ingredients %}<li>{{ ing | markdownify | remove: "<p>" | remove: "</p>" | strip }}</li>{% endfor -%}
+</ul>
+<p><strong>Method</strong></p>{{ fr.method | markdownify }}
+{%- if fr_lic.name %}
+<p><strong>License &middot; {% if fr_lic.url and fr_lic.url != "" %}<a href="{{ fr_lic.url }}">{{ fr_lic.name }}</a>{% else %}{{ fr_lic.name }}{% endif %}</strong></p>{{ fr_lic.text | markdownify }}
+{%- endif -%}

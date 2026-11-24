@@ -1,0 +1,73 @@
+{%- comment -%}
+  Format-specific requirements, checked after the post body is rendered
+  (`content` is the post's HTML). Build FAILS (missing-include trick) when:
+    script — no PDF: neither `pdf:` in front matter nor a pdf.html include
+    zine   — no PDF, likewise
+    recipe — `premise`, `serves`, `ingredients` (a non-empty list) or
+             `method` is missing
+    artwork — `images` isn't a list of one or more; an image has no `src`
+             or a blank `alt`; a caption is over 60 characters; a
+             site-relative `src` isn't a file in the repo (the gallery's rules)
+  Other formats have no extra requirements. Any post with a `banner` needs
+  a non-blank `banner_alt`, and the banner follows the media rule
+  (media-url.html; a "/" path must be a file in the repo).
+{%- endcomment -%}
+{%- assign vf_has_pdf = false -%}
+{%- if page.pdf or content contains 'class="pdf-embed' -%}{%- assign vf_has_pdf = true -%}{%- endif -%}
+{%- if page.format == "script" and vf_has_pdf == false -%}
+  {%- include errors/SCRIPT_POST_NEEDS_A_PDF-set-pdf-in-front-matter-or-use-include-pdf.html.html -%}
+{%- endif -%}
+{%- if page.format == "zine" and vf_has_pdf == false -%}
+  {%- include errors/ZINE_POST_NEEDS_A_PDF-set-pdf-in-front-matter-or-use-include-pdf.html.html -%}
+{%- endif -%}
+{%- if page.format == "recipe" -%}
+  {%- unless page.premise -%}{%- include errors/RECIPE_NEEDS_premise-in-front-matter.html -%}{%- endunless -%}
+  {%- unless page.serves -%}{%- include errors/RECIPE_NEEDS_serves-in-front-matter.html -%}{%- endunless -%}
+  {%- unless page.ingredients and page.ingredients.size > 0 -%}{%- include errors/RECIPE_NEEDS_ingredients-a-list-in-front-matter.html -%}{%- endunless -%}
+  {%- unless page.method -%}{%- include errors/RECIPE_NEEDS_method-in-front-matter.html -%}{%- endunless -%}
+{%- endif -%}
+{%- if page.format == "artwork" -%}
+  {%- unless page.images and page.images.size > 0 -%}{%- include errors/ARTWORK_NEEDS_images-a-list-of-one-or-more-in-front-matter.html -%}{%- endunless -%}
+  {%- for vf_img in page.images -%}
+    {%- unless vf_img.src -%}{%- include errors/ARTWORK_IMAGE_REQUIRES_src-each-image-is-a-list-item-starting-with-a-dash.html -%}{%- endunless -%}
+    {%- assign vf_alt = vf_img.alt | strip -%}
+    {%- if vf_alt == "" -%}{%- include errors/ARTWORK_IMAGE_REQUIRES_alt.html -%}{%- endif -%}
+    {%- if vf_img.caption -%}
+      {%- assign vf_cap_size = vf_img.caption | size -%}
+      {%- if vf_cap_size > 60 -%}{%- include errors/ARTWORK_CAPTION_TOO_LONG-must-be-60-chars-or-fewer.html -%}{%- endif -%}
+    {%- endif -%}
+    {%- if vf_img.src -%}{%- include validate-media-src.html src=vf_img.src -%}{%- endif -%}
+    {%- assign vf_first = vf_img.src | slice: 0, 1 -%}
+    {%- if vf_first == "/" -%}
+      {%- assign vf_file = site.static_files | where: "path", vf_img.src | first -%}
+      {%- unless vf_file -%}{%- include errors/ARTWORK_IMAGE_NOT_FOUND-src-must-point-to-a-file-in-the-repo.html -%}{%- endunless -%}
+    {%- elsif vf_img.src -%}
+      {%- comment -%} On the media host the build can't measure the file, so its size is given. {%- endcomment -%}
+      {%- unless vf_img.width and vf_img.height -%}{%- include errors/ARTWORK_IMAGE_ON_THE_MEDIA_HOST_NEEDS_width-and-height-of-the-full-size-file.html -%}{%- endunless -%}
+    {%- endif -%}
+    {%- comment -%} Every file the picture uses must be on the media host's list (_data/media_files.yml): the full size, each copy in `widths`, and the WebP sibling of each unless `webp: false`. {%- endcomment -%}
+    {%- if vf_first != "/" -%}
+      {%- assign vf_list = site.data.media_files.files | default: empty -%}
+      {%- assign vf_exts = "" | split: "" | push: "" -%}
+      {%- unless vf_img.webp == false %}{% assign vf_exts = vf_exts | push: "webp" %}{% endunless -%}
+      {%- for vf_ext in vf_exts -%}
+        {%- if vf_ext == "" %}{% include media-url.html src=vf_img.src %}{% else %}{% include media-url.html src=vf_img.src ext=vf_ext %}{% endif -%}
+        {%- if mu_path != "" -%}{%- unless vf_list contains mu_path -%}{%- include errors/ARTWORK_FILE_NOT_IN_MEDIA_FILES-list-each-file-on-the-media-host-in-_data-media_files.yml.html -%}{%- endunless -%}{%- endif -%}
+        {%- for vf_w in vf_img.widths -%}
+          {%- if vf_ext == "" %}{% include media-url.html src=vf_img.src w=vf_w %}{% else %}{% include media-url.html src=vf_img.src w=vf_w ext=vf_ext %}{% endif -%}
+          {%- if mu_path != "" -%}{%- unless vf_list contains mu_path -%}{%- include errors/ARTWORK_FILE_NOT_IN_MEDIA_FILES-list-each-file-on-the-media-host-in-_data-media_files.yml.html -%}{%- endunless -%}{%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+{%- if page.banner -%}
+  {%- assign vf_banner_alt = page.banner_alt | strip -%}
+  {%- if vf_banner_alt == "" -%}{%- include errors/BANNER_NEEDS_banner_alt-describe-the-banner-image-in-front-matter.html -%}{%- endif -%}
+  {%- include validate-media-src.html src=page.banner -%}
+  {%- assign vf_banner_first = page.banner | slice: 0, 1 -%}
+  {%- if vf_banner_first == "/" -%}
+    {%- assign vf_banner_file = site.static_files | where: "path", page.banner | first -%}
+    {%- unless vf_banner_file -%}{%- include errors/BANNER_NOT_FOUND-banner-must-point-to-a-file-in-the-repo.html -%}{%- endunless -%}
+  {%- endif -%}
+{%- endif -%}

@@ -1,0 +1,112 @@
+# =============================================================================
+# plainwithcheese — Jekyll site config
+# Authorable on github.com directly. No local toolchain required.
+# Plugins are restricted to the GitHub Pages allowlist.
+# =============================================================================
+
+title: "plainwithcheese"
+# The site's description (search results, link previews, the feed's
+# subtitle) is the jar label's caption on the home page: one value, set here
+# (&tagline) and reused below (*tagline), so the two stay in step.
+description: &tagline "House-made stories, verse & sundries"
+# The author named in the feed (every entry, and the feed itself) and in the
+# search tags. The site's name only, never a real name.
+author: "plainwithcheese"
+
+# Jar wordmark — drives home.html masthead. "with" is auto-italicized in accent red.
+wordmark:
+  eyebrow: "★   FROM THE KITCHEN OF   ★"
+  title:   "PLAINwithCHEESE"
+  caption: *tagline   # the description above
+
+# Red-and-white checker bands down the left and right edges of the home page.
+# true shows them; false hides them. (Home page only; never on other pages,
+# and hidden below 1080px, where they don't fit.) The home page has the bands
+# and no checker trim; every other page has the trim.
+home_checker_bands: true
+
+# Dates in lists of posts (the full menu, section pages, archive cards and
+# tables). false hides them; posts still show their own dates in their
+# footer, and RSS and the sitemap keep theirs. One section can differ with
+# `show_dates: true` (or false) in _data/categories.yml. The home page never
+# shows dates.
+show_dates_in_lists: false
+
+# A red-and-white checker trim under the top strip on inner pages (every page
+# except home, which has the side bands instead), in place of the ornament
+# divider. true shows it; false hides it. A single page can opt out with
+# `checker_trim: false` in its front matter.
+inner_checker_trim: true
+
+# Reading time under a post's dek ("Serving: est. 12 mins"): the body's words
+# divided by this many words a minute, rounded to the nearest minute, at
+# least 1. Which posts get it is set in _data/categories.yml and
+# _data/formats.yml (`reading_time`); the wording is in _data/diner.yml.
+reading_wpm: 230
+url: "https://plainwithcheese.com"
+# Every build runs in UTC, here and on GitHub, so dates and timestamps
+# (pages, the feed, the sitemap) are the same on every machine.
+timezone: Etc/UTC
+
+# The media host: images, audio and PDFs that don't live in the repo (a
+# Cloudflare R2 bucket with a folder per kind and post: images/<slug>/,
+# pdf/<slug>/, audio/<slug>/, video/<slug>/). In front matter and
+# includes, a `src` starting with "/" is a file in the repo, "https://…" is
+# used as is (only on this host), and a path without the "/" is on this host
+# (_includes/media-url.html). A production build fails unless it's https.
+media_url: https://media.plainwithcheese.com
+baseurl: ""
+
+# Permalinks: /:slug — no date prefix, no /posts/ subfolder, no category in path.
+# The slug is set explicitly in each post's front matter.
+permalink: /:slug
+
+# Standalone dialogues: _dialogues/<post-slug>.md renders at /dialogues/<post-slug>/
+# and is linked from the post with the same slug. (Not /<post-slug>/dialogue/:
+# a <post-slug>/ folder next to <post-slug>.html can make GitHub Pages send
+# the post's URL to the folder instead.)
+collections:
+  dialogues:
+    output: true
+    permalink: /dialogues/:name/
+
+defaults:
+  - scope:
+      path: ""
+      type: dialogues
+    values:
+      layout: dialogue
+
+# Markdown engine
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+
+# SCSS
+sass:
+  sass_dir: _sass
+  style: compressed
+
+# Disable the github-pages gem's default theme (jekyll-theme-primer) — it
+# leaks a 76 KB style.css into the build that we don't reference.
+theme: null
+
+# GitHub Pages allowlisted plugins only.
+# https://pages.github.com/versions/
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-paginate
+  - jekyll-redirect-from
+  - jekyll-include-cache
+
+# Build hygiene
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - node_modules
+  - README.md          # the repo's README, not a page
+  - "*.code-workspace"

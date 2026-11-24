@@ -1,0 +1,39 @@
+{%- comment -%}
+  The Kid's Menu: a shared collection, not a section. A post joins it by
+  hand with `kids_menu: true`; it keeps its own section and item code, and
+  still lists in its section. The words (title, gloss, the page's
+  description, the line on each piece) are in _data/kids_menu.yml; the page
+  is at its `url` (layout kids-menu).
+  Sets:
+    kids        — the words, _data/kids_menu.yml
+    kids_pieces — the posts on it, newest first (as site.posts)
+  Validates (build FAILS via the missing-include trick):
+    - `kids_menu` is true or false
+    - no post on it has `content_warning: true` (content notes alone are fine)
+    - production only, once any post is on it: the words aren't still
+      "[" placeholders
+{%- endcomment -%}
+{%- assign kids = site.data.kids_menu -%}
+{%- assign kids_pieces = site.posts | where: "kids_menu", true -%}
+{%- for km_post in site.posts -%}
+  {%- if km_post.kids_menu != nil and km_post.kids_menu != true and km_post.kids_menu != false -%}
+    {%- include errors/KIDS_MENU_MUST_BE_true-or-false.html -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- for km_post in kids_pieces -%}
+  {%- if km_post.content_warning == true -%}
+    {%- include errors/KIDS_MENU_POST_HAS_A_CONTENT_WARNING-a-gated-post-cant-be-on-the-kids-menu.html -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- if kids_pieces.size > 0 -%}
+  {%- unless kids and kids.url and kids.title -%}
+    {%- include errors/KIDS_MENU_NEEDS_its-words-in-_data-kids_menu.yml.html -%}
+  {%- endunless -%}
+  {%- if jekyll.environment == "production" -%}
+    {%- assign km_g = kids.gloss | slice: 0, 1 -%}
+    {%- assign km_d = kids.description | strip | slice: 0, 1 -%}
+    {%- if km_g == "[" or km_d == "[" -%}
+      {%- include errors/KIDS_MENU_WORDS_ARE_PLACEHOLDERS-write-the-gloss-and-description-in-_data-kids_menu.yml.html -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endif -%}

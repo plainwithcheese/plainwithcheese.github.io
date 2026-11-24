@@ -1,0 +1,32 @@
+{%- comment -%}
+  Looks up one dialogue participant and validates it. Sets `dlg_p` for the
+  caller (Liquid includes share the page's variables).
+
+  Params:
+    id     — participant id
+    local  — optional list of participants defined in the dialogue itself;
+             an entry here with the same id wins over _data/participants.yml
+
+  Build FAILS (missing-include trick, as in validate-provenance.html) if the
+  id isn't defined anywhere, if `name` or `kind` is missing or `kind` isn't
+  human/ai, or if an AI has no `model`.
+{%- endcomment -%}
+{%- assign dlg_p = nil -%}
+{%- for dlg_lp in include.local -%}
+  {%- if dlg_lp.id == include.id -%}{%- assign dlg_p = dlg_lp -%}{%- break -%}{%- endif -%}
+{%- endfor -%}
+{%- unless dlg_p -%}{%- assign dlg_p = site.data.participants[include.id] -%}{%- endunless -%}
+{%- unless dlg_p -%}
+  {%- include errors/DIALOGUE_UNKNOWN_PARTICIPANT-every-from-and-who-must-be-in-_data-participants.yml-or-the-dialogue-participants-list.html -%}
+{%- endunless -%}
+{%- unless dlg_p.name -%}
+  {%- include errors/DIALOGUE_PARTICIPANT_NEEDS_name.html -%}
+{%- endunless -%}
+{%- unless dlg_p.kind == "human" or dlg_p.kind == "ai" -%}
+  {%- include errors/DIALOGUE_PARTICIPANT_kind-must-be-human-OR-ai.html -%}
+{%- endunless -%}
+{%- if dlg_p.kind == "ai" -%}
+  {%- unless dlg_p.model -%}
+    {%- include errors/DIALOGUE_AI_PARTICIPANT_NEEDS_model.html -%}
+  {%- endunless -%}
+{%- endif -%}

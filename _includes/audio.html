@@ -1,0 +1,46 @@
+{%- comment -%}
+  Self-hosted audio player (HTML5 <audio>), framed to match figures and the
+  PDF viewer.
+
+    {% include audio.html src="audio/my-slug/take-1.m4a" title="Song for the Grill" %}
+
+  Required:
+    src      — the audio file: on the media host, audio/<slug>/<file>
+               (no leading "/"), or a repo file starting with "/"
+    title    — what the recording is; shown above the player and used as
+               the player's label for screen readers
+  Optional:
+    caption  — italic line under the player
+    download — true shows a "download audio" link
+
+  Build FAILS if `src` or `title` is missing, or a "/" `src` isn't in the repo
+  (missing-include trick, as in figure.html / pdf.html).
+{%- endcomment -%}
+{%- unless include.src -%}
+  {%- include errors/AUDIO_REQUIRES_src-attribute--include-audio.html-needs-src.html -%}
+{%- endunless -%}
+{%- unless include.title -%}
+  {%- include errors/AUDIO_REQUIRES_title-attribute--include-audio.html-needs-title.html -%}
+{%- endunless -%}
+{%- assign au_first = include.src | slice: 0, 1 -%}
+{%- if au_first == "/" -%}
+  {%- assign au_file = site.static_files | where: "path", include.src | first -%}
+  {%- unless au_file -%}
+    {%- include errors/AUDIO_NOT_FOUND-src-must-point-to-a-file-in-the-repo.html -%}
+  {%- endunless -%}
+{%- endif -%}
+{%- include validate-media-src.html src=include.src -%}
+{%- include media-url.html src=include.src -%}
+{%- assign au_url = mu_src -%}
+<figure class="audio-player">
+  <figcaption class="audio-player__title"><span class="audio-player__glyph" aria-hidden="true">&#9834;</span> {{ include.title }}</figcaption>
+  <audio class="audio-player__audio" controls preload="metadata" src="{{ au_url }}" aria-label="{{ include.title | escape }}">
+    <a href="{{ au_url }}">{{ include.title }}</a>
+  </audio>
+  {%- if include.caption or include.download == true or include.download == "true" %}
+  <div class="audio-player__meta">
+    {%- if include.caption %}<span class="audio-player__caption">{{ include.caption }}</span>{% endif -%}
+    {%- if include.download == true or include.download == "true" %}<a class="audio-player__download" href="{{ au_url }}" download>download audio &darr;</a>{% endif -%}
+  </div>
+  {%- endif %}
+</figure>

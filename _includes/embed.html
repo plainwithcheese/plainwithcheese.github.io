@@ -1,0 +1,67 @@
+{%- comment -%}
+  Embedded third-party player (YouTube, SoundCloud, Bandcamp, …),
+  responsive and lazy-loaded.
+
+    {% include embed.html src="https://www.youtube.com/watch?v=VIDEO_ID" title="Live at the grill" %}
+    {% include embed.html src="https://soundcloud.com/artist/track" %}
+    {% include embed.html src='<iframe src="https://bandcamp.com/EmbeddedPlayer/…"></iframe>' %}
+
+  Required:
+    src    — a page URL, or the service's embed code (<iframe …>)
+  Optional:
+    title  — label for screen readers (default "Embedded player")
+    height — fixed height in px for players that aren't 16:9
+             (SoundCloud defaults to 166)
+
+  URLs understood: YouTube (youtube.com/watch?v=…, youtu.be/…) → the
+  privacy-enhanced youtube-nocookie.com player; SoundCloud track or set
+  URLs → SoundCloud's widget. Bandcamp pages can't be converted (their
+  player needs an album/track id), so paste Bandcamp's embed code. Any
+  other URL is framed as-is at 16:9.
+
+  Build FAILS if `src` is missing, or if it's a Bandcamp page URL rather
+  than embed code.
+
+  Disabled: any use fails the build. The player would load as it nears the
+  screen, so YouTube, SoundCloud or Bandcamp could set cookies and follow
+  the reader before they choose to play anything, and the About receipt
+  says "DOES NOT CONTAIN ADS · TRACKING".
+{%- endcomment -%}
+{%- include errors/EMBED_DISABLED-until-click-to-load-is-built--third-party-players-would-break-ADS-TRACKING.html -%}
+{%- unless include.src -%}
+  {%- include errors/EMBED_REQUIRES_src-a-URL-or-embed-code--include-embed.html.html -%}
+{%- endunless -%}
+{%- assign em_src = include.src | strip -%}
+{%- assign em_title = include.title | default: "Embedded player" -%}
+{%- assign em_url = "" -%}
+{%- assign em_height = include.height -%}
+{%- assign em_code = false -%}
+{%- assign em_head = em_src | slice: 0, 7 | downcase -%}
+{%- if em_head == "<iframe" -%}
+  {%- assign em_code = true -%}
+{%- elsif em_src contains "youtube.com/watch" -%}
+  {%- assign em_id = em_src | split: "v=" | last | split: "&" | first -%}
+  {%- assign em_url = "https://www.youtube-nocookie.com/embed/" | append: em_id -%}
+{%- elsif em_src contains "youtu.be/" -%}
+  {%- assign em_id = em_src | split: "youtu.be/" | last | split: "?" | first -%}
+  {%- assign em_url = "https://www.youtube-nocookie.com/embed/" | append: em_id -%}
+{%- elsif em_src contains "soundcloud.com/" -%}
+  {%- assign em_enc = em_src | url_encode -%}
+  {%- assign em_url = "https://w.soundcloud.com/player/?visual=false&url=" | append: em_enc -%}
+  {%- assign em_height = em_height | default: 166 -%}
+{%- elsif em_src contains "bandcamp.com" -%}
+  {%- unless em_src contains "EmbeddedPlayer" -%}
+    {%- include errors/EMBED_BANDCAMP-needs-the-embed-code-from-Bandcamps-Share-Embed-button-not-the-page-URL.html -%}
+  {%- endunless -%}
+  {%- assign em_url = em_src -%}
+  {%- assign em_height = em_height | default: 120 -%}
+{%- else -%}
+  {%- assign em_url = em_src -%}
+{%- endif -%}
+<figure class="embed{% if em_height %} embed--fixed{% endif %}"{% if em_height %} style="--embed-height: {{ em_height }}px"{% endif %}>
+  {%- if em_code %}
+  {{ em_src | replace: "<iframe ", '<iframe loading="lazy" ' | replace: "<IFRAME ", '<iframe loading="lazy" ' }}
+  {%- else %}
+  <iframe src="{{ em_url }}" title="{{ em_title | escape }}" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  {%- endif %}
+</figure>

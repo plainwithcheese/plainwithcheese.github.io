@@ -1,0 +1,65 @@
+{%- comment -%}
+  Where a media file is, from its `src`, by the one rule every image, audio
+  and PDF include uses:
+    "/…"         a file in the repo
+    "https://…"  used as is (validate-media-src.html allows only the media
+                 host, site.media_url)
+    anything else  a path on the media host, which has a folder per kind
+                 and post (images/, pdf/, audio/, video/, each <slug>/):
+                 "images/jellyfish/jellyfish.jpg" is
+                 site.media_url + "/images/jellyfish/jellyfish.jpg"
+  With `media_standin` set (a path on this site; a production build refuses
+  it), media-host paths and full media_url addresses load from there
+  instead.
+  Params:
+    src — the file
+    w   — optional: a width from the image's `widths:`, for its smaller
+          copy, named with "-<w>" before the extension (jellyfish-800.jpg)
+    ext — optional: another format's sibling, the same name with this
+          extension (ext="webp": jellyfish-800.webp)
+  Also sets:
+    mu_path — the file's path on the media host ("" for a repo file or a
+              full address), for checking it against _data/media_files.yml
+  Sets:
+    mu_src — for src and href attributes
+    mu_abs — absolute, for share cards and the feed
+{%- endcomment -%}
+{%- assign mu_in = include.src | strip -%}
+{%- if include.w or include.ext -%}
+  {%- assign mu_ext = mu_in | split: "." | last -%}
+  {%- assign mu_stem_len = mu_in.size | minus: mu_ext.size | minus: 1 -%}
+  {%- assign mu_stem = mu_in | slice: 0, mu_stem_len -%}
+  {%- if include.w %}{% capture mu_stem %}{{ mu_stem }}-{{ include.w }}{% endcapture %}{% endif -%}
+  {%- capture mu_in %}{{ mu_stem }}.{{ include.ext | default: mu_ext }}{% endcapture -%}
+{%- endif -%}
+{%- assign mu_path = "" -%}
+{%- assign mu_first = mu_in | slice: 0, 1 -%}
+{%- if mu_first == "/" -%}
+  {%- assign mu_src = mu_in | relative_url -%}
+  {%- assign mu_abs = mu_in | absolute_url -%}
+{%- else -%}
+  {%- assign mu_path = mu_in -%}
+  {%- assign mu_as_is = false -%}
+  {%- if mu_in contains "://" -%}
+    {%- capture mu_host %}{{ site.media_url }}/{% endcapture -%}
+    {%- assign mu_head = mu_in | slice: 0, mu_host.size -%}
+    {%- if mu_head == mu_host -%}
+      {%- assign mu_path = mu_in | slice: mu_host.size, mu_in.size -%}
+      {%- unless site.media_standin %}{% assign mu_as_is = true %}{% endunless -%}
+    {%- else -%}
+      {%- assign mu_path = "" -%}
+      {%- assign mu_as_is = true -%}
+    {%- endif -%}
+  {%- endif -%}
+  {%- if mu_as_is -%}
+    {%- assign mu_src = mu_in -%}
+    {%- assign mu_abs = mu_in -%}
+  {%- elsif site.media_standin -%}
+    {%- capture mu_join %}{{ site.media_standin }}/{{ mu_path }}{% endcapture -%}
+    {%- assign mu_src = mu_join | relative_url -%}
+    {%- assign mu_abs = mu_join | absolute_url -%}
+  {%- else -%}
+    {%- capture mu_src %}{{ site.media_url }}/{{ mu_path }}{% endcapture -%}
+    {%- assign mu_abs = mu_src -%}
+  {%- endif -%}
+{%- endif -%}

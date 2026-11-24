@@ -1,0 +1,114 @@
+{%- comment -%}
+  The diner bottom strip, used on every page: red double rules, "now serving"
+  counter, catalog line and stamp, with the small print (credits and license,
+  formerly the inner pages' colophon) underneath. All text comes from
+  _data/diner.yml.
+
+  - Counter: assets/js/diner.js replaces the placeholder with a clock-driven
+    3-digit number, the same on every page at any moment. On the 404 page
+    it's broken instead (an easter egg): assets/js/counter-glitch.js
+    glitches the number, and screen readers hear "now serving: error".
+  - Catalog line: names the page, one rule per kind of page, listed in
+    _data/diner.yml. Posts have none (their code and section are already
+    above the title) unless they set `catalog:`. Phones hide it (CSS), so
+    the strip keeps to one line. It sits on the strip's true center: the
+    strip is three columns, the outer two always equal.
+  - Small print: the credits and the copyright line, each split at " · " so
+    a line only ever breaks between parts ("built with Jekyll" stays whole).
+    Each dot trails the part before it, so a wrapped line ends
+    "… ·" and never starts with a dot.
+  - Stamp: diner.js picks one of `stamps` per page load; the 404 page always
+    shows `stamp_not_found` (STALE) and isn't randomized.
+{%- endcomment -%}
+{%- assign df = site.data.diner -%}
+{%- comment -%} Catalog line: names the page; see the table in _data/diner.yml. {%- endcomment -%}
+{%- assign df_catalog = df.footer.catalog -%}
+{%- if page.collection == "posts" -%}
+  {%- assign df_catalog = "" -%}
+{%- elsif page.layout == "home" -%}
+  {%- include todays-special.html -%}
+  {%- if special -%}
+    {%- include item-code.html post=special -%}
+    {%- capture df_catalog %}No. {{ item_code }} &middot; {{ df.footer.catalog_home }}{% endcapture -%}
+  {%- endif -%}
+{%- elsif page.layout == "category" -%}
+  {%- assign df_section = site.data.categories | where: "slug", page.category | first -%}
+  {%- assign df_n = site.posts | where: "category", page.category | size -%}
+  {%- capture df_catalog %}{{ df_section.display | default: page.category }} &middot; {{ df_n }} {% if df_n == 1 %}item{% else %}items{% endif %}{% endcapture -%}
+{%- elsif page.layout == "menu-index" -%}
+  {%- assign df_n = site.posts | size -%}
+  {%- capture df_catalog %}{{ page.title }} &middot; {{ df_n }} {% if df_n == 1 %}item{% else %}items{% endif %}{% endcapture -%}
+{%- elsif page.layout == "about" -%}
+  {%- capture df_catalog %}Order No. {{ "now" | date: "%y" | prepend: "00" }} &middot; {{ page.title }}{% endcapture -%}
+{%- elsif page.url == "/series/" -%}
+  {%- assign df_n = site.posts | where_exp: "p", "p.series" | size -%}
+  {%- capture df_catalog %}{{ page.title }} &middot; {{ df_n }} {% if df_n == 1 %}part{% else %}parts{% endif %}{% endcapture -%}
+{%- elsif page.layout == "anthology" -%}
+  {%- assign df_n = site.posts | where: "anthology", page.anthology | size -%}
+  {%- capture df_catalog %}Anthology &middot; {{ df_n }} {% if df_n == 1 %}item{% else %}items{% endif %}{% endcapture -%}
+{%- elsif page.layout == "anthology-index" -%}
+  {%- include anthology-list.html -%}
+  {%- assign df_n = anth_list | size -%}
+  {%- capture df_catalog %}{{ page.title }} &middot; {{ df_n }} {% if df_n == 1 %}anthology{% else %}anthologies{% endif %}{% endcapture -%}
+{%- elsif page.collection == "dialogues" -%}
+  {%- assign df_post_slug = page.post | default: page.slug -%}
+  {%- assign df_post = site.posts | where: "slug", df_post_slug | first -%}
+  {%- if df_post -%}
+    {%- include item-code.html post=df_post -%}
+    {%- capture df_catalog %}No. {{ item_code }} &middot; dialogue{% endcapture -%}
+  {%- endif -%}
+{%- elsif page.url == "/404.html" -%}
+  {%- capture df_catalog %}No. 404 &middot; {{ df.footer.catalog_not_found }}{% endcapture -%}
+{%- endif -%}
+{%- comment -%}
+  Small-print license: the page's own (a post's, or a section page's), else
+  the site default. See _data/licenses.yml.
+{%- endcomment -%}
+{%- if page.collection == "posts" -%}
+  {%- include license-data.html post=page -%}
+{%- elsif page.layout == "category" -%}
+  {%- include license-data.html section=page.category -%}
+{%- else -%}
+  {%- assign page_license = site.data.licenses.default -%}
+{%- endif -%}
+{%- assign df_license = page_license -%}
+{%- comment -%} Linked to its deed (_data/licenses.yml), like the post label; "All rights reserved" has none. {%- endcomment -%}
+{%- assign df_license_entry = site.data.licenses.list | where: "name", df_license | first -%}
+{%- assign df_license_url = df_license_entry.url | default: "" -%}
+{%- comment -%} A page can set its own line with `catalog:` in its front matter. {%- endcomment -%}
+{%- if page.catalog -%}{%- assign df_catalog = page.catalog -%}{%- endif -%}
+<footer class="diner-footer" role="contentinfo">
+  <div class="home-diner-footer">
+    {%- if page.url == "/404.html" %}
+    {%- comment -%} The 404's counter is broken (counter-glitch.js): one steady label for screen readers, the glitching number hidden from them. {%- endcomment %}
+    <span class="home-diner-footer__counter home-diner-footer__counter--broken"><span class="visually-hidden">{{ df.footer.counter_label }}: {{ df.footer.counter_broken_label | default: "error" }}</span><span aria-hidden="true">{{ df.footer.counter_label }}: <span class="home-counter home-counter--glitch" data-diner-glitch="{{ df.footer.counter_glitch | default: 'reset' }}" data-glitch-seconds="{{ df.footer.counter_glitch_seconds | default: 0 }}">{{ df.footer.counter_broken | default: "ERR" }}</span></span></span>
+    {%- else %}
+    <span class="home-diner-footer__counter">{{ df.footer.counter_label }}: <span class="home-counter" data-diner-counter data-tick="{{ df.footer.counter_tick_seconds | default: 45 }}">{{ df.footer.counter }}</span></span>
+    {%- endif %}
+    {%- if df_catalog != "" %}
+    <span class="home-diner-footer__catalog">{{ df_catalog }}</span>
+    {%- endif %}
+    {%- if page.url == "/404.html" %}
+    <span class="home-diner-footer__stamp">{{ df.footer.stamp_not_found | default: "STALE" }}</span>
+    {%- else %}
+    <span class="home-diner-footer__stamp" data-diner-stamps="{{ df.footer.stamps | jsonify | escape }}">{{ df.footer.stamps | first }}</span>
+    {%- endif %}
+  </div>
+  {%- assign df_credits = df.colophon.credits | split: " · " -%}
+  {%- comment -%} On a post the license is in its label, so the copyright line leaves it out (each fact said once). {%- endcomment -%}
+  {%- if page.collection == "posts" -%}
+    {%- capture df_copyright %}&copy; {{ "now" | date: "%Y" }} · {{ site.title }}{% endcapture -%}
+  {%- else -%}
+    {%- capture df_copyright %}&copy; {{ "now" | date: "%Y" }} · {{ site.title }} · {% if df_license_url != "" %}<a href="{{ df_license_url }}" rel="license">{{ df_license }}</a>{% else %}{{ df_license }}{% endif %}{% if df.colophon.license_note %} {{ df.colophon.license_note }}{% endif %}{% endcapture -%}
+  {%- endif -%}
+  {%- assign df_copyright = df_copyright | split: " · " %}
+  <div class="diner-colophon">
+    {%- comment -%} The space after each part is where a line may break (Liquid drops a tag whose body is only a space, so it isn't inside one). {%- endcomment %}
+    <span class="diner-colophon__credits">{% for df_part in df_credits %}<span class="diner-colophon__part">{{ df_part }}{% unless forloop.last %}&nbsp;&middot;{% endunless %}</span> {% endfor %}</span>
+    <span class="diner-colophon__license">{% for df_part in df_copyright %}<span class="diner-colophon__part">{{ df_part }}{% unless forloop.last %}&nbsp;&middot;{% endunless %}</span> {% endfor %}</span>
+  </div>
+</footer>
+<script src="{{ '/assets/js/diner.js' | relative_url }}" defer></script>
+{%- if page.url == "/404.html" %}
+<script src="{{ '/assets/js/counter-glitch.js' | relative_url }}" defer></script>
+{%- endif %}

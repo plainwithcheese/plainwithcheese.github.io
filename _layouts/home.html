@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="{{ site.lang | default: 'en' }}">
+<head>
+  {%- comment -%} Dark mode: apply a stored pick before the page paints (see assets/js/theme.js). {%- endcomment %}
+  <script>try{var t=localStorage.getItem("pwc-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ site.title }}</title>
+  <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" sizes="32x32">
+  <link rel="icon" href="{{ '/favicon.svg' | relative_url }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ '/apple-touch-icon.png' | relative_url }}">
+  {%- comment -%} Fetch the body and display fonts early so text doesn't reflow when they arrive. {%- endcomment %}
+  <link rel="preload" href="{{ '/assets/fonts/source-serif-4/source-serif-4-opsz-wght.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ '/assets/fonts/im-fell-dw-pica-sc/im-fell-dw-pica-sc-400.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+  {%- comment -%} The page's own <title> is above ("Title · plainwithcheese"); title=false stops jekyll-seo-tag adding a second. {%- endcomment %}
+  {%- seo title=false -%}
+  {%- feed_meta -%}
+</head>
+<body data-palette="diner"{% if site.home_checker_bands %} data-checker-bands{% endif %}>
+  <a class="skip-link" href="#main">{{ site.data.nav.skip_link }}</a>
+  <div class="home-wrap">
+
+    <!-- 1. TOP STRIP — shared with every page; no center
+         wordmark here, since the jar label sits right below -->
+    {% include diner-topnav.html divider=false %}
+
+    <main class="home-main" id="main" tabindex="-1">
+
+    <!-- 3. JAR WORDMARK — driven by site.wordmark in _config.yml -->
+    <div class="jar-masthead">
+      <div class="jar-frame">
+        {%- if site.wordmark.eyebrow and site.wordmark.eyebrow != "" -%}
+        <div class="jar-eyebrow">{{ site.wordmark.eyebrow }}</div>
+        {%- endif -%}
+        <h1 class="jar-title">{{ site.wordmark.title | replace: "with", "<em>with</em>" }}</h1>
+        {%- if site.wordmark.caption and site.wordmark.caption != "" -%}
+        <div class="jar-caption">{{ site.wordmark.caption }}</div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    <!-- 4. "TODAY'S SPECIALS" ORNATE PANEL -->
+    {%- comment -%} The newest post outside Desserts (todays-special.html). {%- endcomment -%}
+    {%- include todays-special.html -%}
+
+    <div class="home-ornate">
+      <div class="home-ornate__hdr">
+        <span class="home-ornate__label">&#8212; {{ site.data.diner.specials.label }} &#8212;</span>
+        <a href="{{ '/menu/' | relative_url }}" class="home-ornate__view-all">view full menu &rarr;</a>
+      </div>
+
+      <!-- SPECIALS: single full-width featured entry -->
+      {%- if special -%}
+      {%- include item-code.html post=special -%}
+
+      <div class="home-ornate__specials-block">
+        <div class="home-cat-hdr">
+          <div class="home-cat-hdr__rule"></div>
+          <h2 class="home-cat-hdr__title">{{ site.data.diner.specials.heading }}</h2>
+          {%- if site.data.diner.specials.gloss %}
+          <div class="home-cat-hdr__sub">—&nbsp;{{ site.data.diner.specials.gloss }}&nbsp;—</div>
+          {%- endif %}
+          <div class="home-cat-hdr__rule"></div>
+        </div>
+        {% include menu-row.html hide_date=true post=special code=item_code %}
+      </div>
+      {%- endif -%}
+
+      <!-- SECTIONS: one block per section in _data/categories.yml, in their
+           `home_order`, newest three posts each, side by side in pairs (one
+           column on phones). A `home_wide` section (Burgers) spans both
+           columns with its newest six, in two columns of three reading across
+           (three on phones). Today's special isn't listed again in its own
+           section, unless it's that section's only post (then it's in both).
+           Sections with no posts are left out. Each block
+           is a subgrid of 4 rows (header + 3 rows of posts), so headers and
+           posts line up across the two columns. -->
+      {%- comment -%}
+        The sections shown: open ones with posts, in `home_order`. Then the
+        odd one out: narrow sections pair up in order, and a wide one always
+        starts its own row, so a narrow section left unpaired before a wide
+        one, or at the end, is centered on its own row ("solo").
+      {%- endcomment -%}
+      {%- assign home_secs = site.data.categories | sort: "home_order" -%}
+      {%- assign home_show = "" | split: "" -%}
+      {%- for sec in home_secs -%}
+        {%- assign sec_n = site.posts | where: "category", sec.slug | size -%}
+        {%- unless sec.hidden or sec_n == 0 -%}{%- assign home_show = home_show | push: sec -%}{%- endunless -%}
+      {%- endfor -%}
+      {%- assign home_solo = "|" -%}
+      {%- assign home_run = 0 -%}
+      {%- assign home_last = "" -%}
+      {%- for sec in home_show -%}
+        {%- if sec.home_wide -%}
+          {%- assign home_odd = home_run | modulo: 2 -%}
+          {%- if home_odd == 1 -%}{%- assign home_solo = home_solo | append: home_last | append: "|" -%}{%- endif -%}
+          {%- assign home_run = 0 -%}
+        {%- else -%}
+          {%- assign home_run = home_run | plus: 1 -%}
+          {%- assign home_last = sec.slug -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- assign home_odd = home_run | modulo: 2 -%}
+      {%- if home_odd == 1 -%}{%- assign home_solo = home_solo | append: home_last | append: "|" -%}{%- endif %}
+      <div class="home-ornate__grid">
+        {%- for sec in home_show %}
+        {%- assign sec_posts = site.posts | where: "category", sec.slug -%}
+        {%- comment -%} Today's special is left out of its own section's list, unless it's the section's only post. A wide section's six are counted after it. {%- endcomment -%}
+        {%- if special and special.category == sec.slug and sec_posts.size > 1 -%}
+          {%- assign sec_posts = sec_posts | where_exp: "p", "p.url != special.url" -%}
+        {%- endif -%}
+        {%- assign sec_key = "|" | append: sec.slug | append: "|" -%}
+        {%- if sec.home_wide -%}{%- assign sec_limit = 6 -%}{%- else -%}{%- assign sec_limit = 3 -%}{%- endif %}
+        <div class="home-ornate__section{% if sec.home_wide %} home-ornate__section--wide{% elsif home_solo contains sec_key %} home-ornate__section--solo{% endif %}">
+          <div class="home-cat-hdr">
+            <div class="home-cat-hdr__rule"></div>
+            <h2 class="home-cat-hdr__title"><a href="{{ '/menu/' | append: sec.slug | append: '/' | relative_url }}" class="home-cat-hdr__link">{{ sec.display }}</a></h2>
+            {%- if sec.gloss %}
+            <div class="home-cat-hdr__sub">—&nbsp;{{ sec.gloss }}&nbsp;—</div>
+            {%- endif %}
+            <div class="home-cat-hdr__rule"></div>
+          </div>
+          {%- for post in sec_posts limit: sec_limit -%}
+          {%- include item-code.html post=post -%}
+          {% include menu-row.html hide_date=true post=post code=item_code %}
+          {%- endfor -%}
+        </div>
+        {%- endfor %}
+      </div>
+
+      {% include provenance-legend.html %}
+    </div>{% include kids-menu-panel.html home=true %}{%- include whats-cooking.html %}
+
+    </main>
+
+    <!-- 5. DINER FOOTER — shared with every page; text in _data/diner.yml -->
+    {% include diner-footer.html %}
+
+  </div>
+</body>
+</html>

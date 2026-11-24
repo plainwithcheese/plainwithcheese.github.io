@@ -1,0 +1,48 @@
+{%- comment -%}
+  Image gallery: a grid of thumbnails with captions; click to enlarge in a
+  lightbox (assets/js/lightbox.js). Images come from a front matter list:
+
+    gallery:
+      - src: images/my-slug/one.jpg
+        alt: Describe the image
+        caption: Optional, 60 characters or fewer
+
+    {% include gallery.html %}                       ← uses page.gallery
+    {% include gallery.html images=page.sketches %}  ← any other list
+
+  Each image: `src` and a non-blank `alt` required; `caption` optional (same 60-character
+  limit as figure.html). A `src` is on the media host (images/<slug>/…), or
+  a repo file starting with "/", which must exist.
+  Build FAILS on any violation (missing-include trick).
+
+  Without JS, each thumbnail links straight to the full image.
+{%- endcomment -%}
+{%- assign gl_images = include.images | default: page.gallery -%}
+{%- unless gl_images and gl_images.size > 0 -%}
+  {%- include errors/GALLERY_NEEDS_images-a-list-in-front-matter-gallery-or-images=page.your_list.html -%}
+{%- endunless -%}
+{%- for gl in gl_images -%}
+  {%- unless gl.src -%}{%- include errors/GALLERY_IMAGE_REQUIRES_src.html -%}{%- endunless -%}
+  {%- assign gl_alt = gl.alt | strip -%}
+  {%- if gl_alt == "" -%}{%- include errors/GALLERY_IMAGE_REQUIRES_alt.html -%}{%- endif -%}
+  {%- if gl.caption -%}
+    {%- assign gl_cap_size = gl.caption | size -%}
+    {%- if gl_cap_size > 60 -%}{%- include errors/GALLERY_CAPTION_TOO_LONG-must-be-60-chars-or-fewer.html -%}{%- endif -%}
+  {%- endif -%}
+  {%- if gl.src -%}{%- include validate-media-src.html src=gl.src -%}{%- endif -%}
+  {%- assign gl_first = gl.src | slice: 0, 1 -%}
+  {%- if gl_first == "/" -%}
+    {%- assign gl_file = site.static_files | where: "path", gl.src | first -%}
+    {%- unless gl_file -%}{%- include errors/GALLERY_IMAGE_NOT_FOUND-src-must-point-to-a-file-in-the-repo.html -%}{%- endunless -%}
+  {%- endif -%}
+{%- endfor -%}
+<div class="gallery" data-gallery>
+  {%- for gl in gl_images %}
+  <figure class="gallery__item">
+    {%- include media-url.html src=gl.src %}
+    <a class="gallery__link" href="{{ mu_src }}" data-caption="{{ gl.caption | escape }}"><img class="gallery__img" src="{{ mu_src }}" alt="{{ gl.alt | escape }}" loading="lazy"></a>
+    {%- if gl.caption %}<figcaption class="gallery__caption">{{ gl.caption }}</figcaption>{% endif %}
+  </figure>
+  {%- endfor %}
+</div>
+<script type="module" src="{{ '/assets/js/lightbox.js' | relative_url }}"></script>

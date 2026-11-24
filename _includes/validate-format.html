@@ -1,0 +1,10 @@
+{%- comment -%}
+  Format validator. Build FAILS if `page.format` is missing or not in the
+  list at _data/formats.yml#allowed. Same policy as provenance — uses the
+  deliberately-missing-include trick. The missing filename communicates
+  the rule.
+{%- endcomment -%}
+{%- assign allowed_formats = site.data.formats.allowed -%}
+{%- unless allowed_formats contains page.format -%}
+  {%- include errors/INVALID_OR_MISSING_FORMAT-must-be-in-_data-formats.yml-allowed-list.html -%}
+{%- endunless -%}

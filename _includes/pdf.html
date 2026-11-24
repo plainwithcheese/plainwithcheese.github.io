@@ -1,0 +1,71 @@
+{%- comment -%}
+  PDF viewer include. Shows a PDF one page at a time, with page controls and
+  a download link, using PDF.js (see assets/js/pdf-embed.js).
+
+  Required:
+    src      — the PDF: on the media host, pdf/<slug>/<file>.pdf (no
+               leading "/"), or a repo file starting with "/"
+    title    — what the document is; used for the label and screen readers
+
+  Optional:
+    caption        — italic line under the viewer
+    hide_title     — true hides the title and caption under the viewer
+                     (title is still required: screen readers use it)
+    hide_download  — true hides the download link
+
+  Validation: build FAILS if `src` or `title` is missing, or if a
+  site-relative `src` (starting with "/") isn't a file in the repo — same
+  deliberately-missing-include trick as figure.html.
+
+  Without JavaScript (or if the PDF can't be drawn), the status line says
+  so and points to the download link, when there is one.
+{%- endcomment -%}
+{%- unless include.src -%}
+  {%- include errors/PDF_REQUIRES_src-attribute--include-pdf.html-needs-src.html -%}
+{%- endunless -%}
+{%- unless include.title -%}
+  {%- include errors/PDF_REQUIRES_title-attribute--include-pdf.html-needs-title.html -%}
+{%- endunless -%}
+{%- comment -%} A site-relative src must point at a file that's in the repo. {%- endcomment -%}
+{%- assign pdf_first_char = include.src | slice: 0, 1 -%}
+{%- if pdf_first_char == "/" -%}
+  {%- assign pdf_file = site.static_files | where: "path", include.src | first -%}
+  {%- unless pdf_file -%}
+    {%- include errors/PDF_NOT_FOUND-src-must-point-to-a-file-in-the-repo.html -%}
+  {%- endunless -%}
+{%- endif -%}
+{%- include validate-media-src.html src=include.src -%}
+{%- include media-url.html src=include.src -%}
+{%- assign pdf_url = mu_src -%}
+{%- assign pdf_abs = mu_abs -%}
+{%- assign pdf_show_title = true -%}
+{%- if include.hide_title == true or include.hide_title == "true" -%}{%- assign pdf_show_title = false -%}{%- endif -%}
+{%- assign pdf_show_download = true -%}
+{%- if include.hide_download == true or include.hide_download == "true" -%}{%- assign pdf_show_download = false -%}{%- endif -%}
+<figure class="pdf-embed{% unless pdf_show_title or pdf_show_download %} pdf-embed--bare{% endunless %}" data-pdf-src="{{ pdf_url }}" data-pdf-title="{{ include.title | escape }}"{% if pdf_show_download %} data-pdf-download{% endif %} tabindex="-1">
+  <div class="pdf-embed__frame">
+    <canvas class="pdf-embed__canvas" role="img" aria-label="{{ include.title | escape }}"></canvas>
+    <p class="pdf-embed__status">This PDF needs JavaScript to display here{% if pdf_show_download %} &mdash; use the download link below{% endif %}.</p>
+  </div>
+  {%- comment -%} Printed instead of the viewer (see the print styles): the title and the PDF's full link. {%- endcomment %}
+  <p class="pdf-embed__print"><span class="pdf-embed__print-label">{{ site.data.diner.print.pdf_label }}</span> {{ include.title }} &middot; {{ pdf_abs }}</p>
+  <div class="pdf-embed__bar">
+    <button type="button" class="pdf-embed__btn" data-pdf-prev disabled aria-label="prev page">&lsaquo; prev</button>
+    <span class="pdf-embed__pages">page <span data-pdf-page>&ndash;</span> of <span data-pdf-count>&ndash;</span></span>
+    <button type="button" class="pdf-embed__btn" data-pdf-next disabled aria-label="next page">next &rsaquo;</button>
+  </div>
+  {%- if pdf_show_title or pdf_show_download %}
+  <figcaption class="pdf-embed__meta">
+    {%- if pdf_show_title %}
+    <span class="pdf-embed__title">{{ include.title }}</span>
+    {%- endif %}
+    {%- if pdf_show_download %}
+    <a class="pdf-embed__download" href="{{ pdf_url }}" download>download pdf &darr;</a>
+    {%- endif %}
+    {%- if pdf_show_title and include.caption %}
+    <span class="pdf-embed__caption">{{ include.caption }}</span>
+    {%- endif %}
+  </figcaption>
+  {%- endif %}
+</figure>
+<script type="module" src="{{ '/assets/js/pdf-embed.js' | relative_url }}"></script>

@@ -1,0 +1,22 @@
+{%- comment -%}
+  Estimated reading time, under a post's dek: "Serving: est. 12 mins", or
+  "Serving: est. 1 min" (wording in _data/diner.yml, `serving`).
+
+  Shown only when the post's section has `reading_time: true`
+  (_data/categories.yml: Burgers and Drinks) and its format is listed under
+  `reading_time` in _data/formats.yml (text). Worked out at build time, so
+  there's no JavaScript: the body's words (tags stripped) divided by
+  `reading_wpm` in _config.yml (230), rounded to the nearest whole minute,
+  at least 1.
+
+  Param: html — the post's rendered body (the layout passes `content`)
+{%- endcomment -%}
+{%- assign rt_section = site.data.categories | where: "slug", page.category | first -%}
+{%- if rt_section.reading_time == true and site.data.formats.reading_time contains page.format -%}
+  {%- assign rt_words = include.html | strip_html | number_of_words -%}
+  {%- assign rt_rate = site.reading_wpm | default: 230 | times: 1.0 -%}
+  {%- assign rt_mins = rt_words | divided_by: rt_rate | round -%}
+  {%- if rt_mins < 1 -%}{%- assign rt_mins = 1 -%}{%- endif -%}
+  {%- assign rt_text = site.data.diner.serving %}
+      <p class="post__serving">{{ rt_text.label }} {{ rt_mins }} {% if rt_mins == 1 %}{{ rt_text.one }}{% else %}{{ rt_text.many }}{% endif %}</p>
+{%- endif -%}

@@ -1,0 +1,83 @@
+# Content notes: the fixed vocabulary for a post's `content_notes:`. A post
+# lists its notes as one line, lowercase and
+# comma-separated, the way they read on the page:
+#
+#   content_notes: strong language, injury, claustrophobia, brief vomiting
+#
+# (a YAML list of the same notes works too). Each note is a term from
+# `terms` below, optionally led by one qualifier from `qualifiers`
+# ("brief vomiting", "mentioned death"). The build fails on a term or
+# qualifier that isn't listed here (_includes/content-notes-data.html).
+#
+# The notes show behind the "[content notes]" control near the top of the post
+# ("contains: …"), on any post that has them. On a post with
+# `content_warning: true`, the same control also opens the gate's choices.
+# Wording for the control and the gate: _data/content_warning.yml.
+#
+# Terms and qualifiers are lowercase.
+
+# The optional word before a term: how the thing appears.
+qualifiers:
+  mentioned: "referred to, off the page, or in the past"
+  brief: "on the page, quick"
+  mild: "on the page, low intensity"
+  graphic: "detailed or lingered on"
+
+# The terms, grouped for reading only (the groups never show on the site).
+terms:
+  violence and injury:
+    - violence
+    - injury
+    - gore
+    - body horror
+    - murder
+    - torture
+    - gun violence
+    - war
+    - cannibalism
+    - burning
+    - death
+    - death of a child
+    - death of an animal
+    - animal harm
+  suicide and self-harm:
+    - suicide
+    - self-harm
+  abuse:
+    - sexual assault
+    - child abuse
+    - domestic abuse
+    - emotional abuse
+    - kidnapping
+    - stalking
+  sex and the body:
+    - sexual content
+    - nudity
+    - pregnancy loss
+    - medical procedures
+    - vomiting
+  substances:
+    - alcohol use
+    - drug use
+    - addiction
+  the mind:
+    - grief
+    - mental illness
+    - eating disorders
+  fears:
+    - claustrophobia
+    - drowning
+    - spiders and insects
+  language and hate:
+    - language
+    - strong language
+    - slurs
+    - racism
+    - antisemitism
+    - homophobia
+    - transphobia
+    - misogyny
+    - ableism
+  audio and video:
+    - flashing lights
+    - loud sounds

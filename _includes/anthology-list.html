@@ -1,0 +1,10 @@
+{%- comment -%}
+  Sets `anth_list`: the anthologies in _data/anthologies.yml that have at
+  least one piece, in the file's order. An anthology with no posts yet (like
+  the placeholder entry in production) is left out everywhere it's listed.
+{%- endcomment -%}
+{%- assign anth_list = "" | split: "" -%}
+{%- for al in site.data.anthologies -%}
+  {%- assign al_n = site.posts | where: "anthology", al.slug | size -%}
+  {%- if al_n > 0 -%}{%- assign anth_list = anth_list | push: al -%}{%- endif -%}
+{%- endfor -%}

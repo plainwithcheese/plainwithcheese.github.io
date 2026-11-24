@@ -1,0 +1,15 @@
+{%- comment -%}
+Provenance validator. Build FAILS if `page.provenance` is missing or not in
+the allowed set { by_hand, assisted, by_machine }.
+
+Mechanism: include a deliberately-missing file. Jekyll's Liquid file system
+raises a hard error when an include can't be resolved — which fails the
+build cleanly on GitHub Pages without a custom plugin. The filename of the
+missing include doubles as the error message: when the build prints
+"Could not locate the included file 'errors/...'", the author sees the
+required values right there.
+{%- endcomment -%}
+{%- assign valid_provenance = "by_hand,assisted,by_machine" | split: "," -%}
+{%- unless valid_provenance contains page.provenance -%}
+  {%- include errors/INVALID_OR_MISSING_PROVENANCE-must-be-by_hand-OR-assisted-OR-by_machine.html -%}
+{%- endunless -%}

@@ -1,0 +1,17 @@
+{%- comment -%}
+Resolves the current page's provenance into short / code labels, exposing:
+  prov_short  — short label for the F1 footer ("by hand" etc.)
+  prov_code   — small-caps code for the S2 chip ("BY HAND" etc.)
+The mark itself (Lucide's pen-line, blend, bot) comes from prov-mark.html.
+Assumes validate-provenance.html has already run.
+{%- endcomment -%}
+{%- if page.provenance == "by_hand" -%}
+  {%- assign prov_short = "by hand" -%}
+  {%- assign prov_code = "BY HAND" -%}
+{%- elsif page.provenance == "assisted" -%}
+  {%- assign prov_short = "with machine collaboration" -%}
+  {%- assign prov_code = "WITH MACHINE" -%}
+{%- elsif page.provenance == "by_machine" -%}
+  {%- assign prov_short = "by machine" -%}
+  {%- assign prov_code = "BY MACHINE" -%}
+{%- endif -%}

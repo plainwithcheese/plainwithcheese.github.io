@@ -1,0 +1,62 @@
+{%- comment -%}
+  Figure include.
+
+  Required:
+    src      — the image: on the media host, images/<slug>/<file> (no
+               leading "/"), or a repo file starting with "/"
+    alt      — alt text
+
+  Optional:
+    caption  — italic caption row. When present, prepends an auto-numbered
+               "FIG. n" prefix. When omitted, no caption row renders at all
+               (no empty space, no number).
+    width    — full (default) | wide | narrow
+    credit   — small, right-aligned line beneath the caption.
+
+  Auto-numbering: counter lives in the local Liquid `figure_count` variable
+  and resets per page (each post starts a fresh render context).
+
+  Validation: build FAILS if `src` is missing or `alt` is missing or blank — uses the same
+  deliberately-missing-include trick as the provenance validator.
+{%- endcomment -%}
+{%- unless include.src -%}
+  {%- include errors/FIGURE_REQUIRES_src-attribute--include-figure.html-needs-src.html -%}
+{%- endunless -%}
+{%- assign fig_alt = include.alt | strip -%}
+{%- if fig_alt == "" -%}
+  {%- include errors/FIGURE_REQUIRES_alt-attribute--include-figure.html-needs-alt.html -%}
+{%- endif -%}
+
+{%- comment -%}
+  Caption length check. The pill renders single-line (`white-space: nowrap`)
+  with its box hard-capped at the image width, so captions must stay short
+  or they'd overflow visually. 60 chars is empirically the safe ceiling at
+  12px italic body font inside a 640px body column (the FIG. n prefix
+  with its 0.18em letter-spacing eats ~50px of that). Tunable: change the
+  literal in the comparison and rename the missing-include filename to match.
+{%- endcomment -%}
+{%- if include.caption -%}
+  {%- assign cap_size = include.caption | size -%}
+  {%- if cap_size > 60 -%}
+    {%- include errors/FIGURE_CAPTION_TOO_LONG-must-be-60-chars-or-fewer.html -%}
+  {%- endif -%}
+{%- endif -%}
+
+{%- if include.caption -%}
+  {%- assign figure_count = figure_count | default: 0 | plus: 1 -%}
+{%- endif -%}
+
+{%- include validate-media-src.html src=include.src -%}
+{%- include media-url.html src=include.src -%}
+{%- assign fig_width = include.width | default: 'full' -%}
+<figure class="post__figure post__figure--{{ fig_width }}{% if include.caption %} post__figure--captioned{% endif %}">
+  <span class="post__figure-frame">
+    <img src="{{ mu_src }}" alt="{{ include.alt | escape }}">
+    {%- if include.caption %}
+    <figcaption class="post__figure-pill">
+      <span class="post__figure-num">FIG.&nbsp;{{ figure_count }}</span>{{ include.caption }}
+    </figcaption>
+    {% endif -%}
+  </span>
+  {%- if include.credit %}<span class="post__figure-credit">{{ include.credit }}</span>{% endif -%}
+</figure>

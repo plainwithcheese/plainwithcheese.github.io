@@ -1,0 +1,109 @@
+---
+# Jekyll processes this file only to fill in the sitemap address at the end.
+# Having a robots.txt also stops jekyll-sitemap from writing its own.
+layout: null
+sitemap: false
+---
+# robots.txt
+#
+# Search engines are allowed: any crawler not named below may crawl
+# everything (the last group).
+#
+# AI crawlers are blocked, both kinds:
+#   - training crawlers, which collect pages to train AI models;
+#   - AI-answer fetchers, which fetch pages to answer a chatbot or AI search
+#     user's question, or to cite in an AI search result.
+# Why: to keep this site's pages out of AI training data and out of AI
+# tools' answers.
+#
+# What this can't do:
+#   - robots.txt is a request, not a lock. Well-behaved crawlers honor it;
+#     some don't.
+#   - Google's AI Overviews and Bing's Copilot answers use the search
+#     engines' own crawlers (Googlebot, Bingbot), so they can't be blocked
+#     here without leaving those search engines.
+#
+# Link previews (when a link is shared in a chat app or on social media)
+# aren't blocked.
+
+# OpenAI: training, ChatGPT search, and pages fetched for ChatGPT users
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+Disallow: /
+
+# Anthropic: training, Claude search, and pages fetched for Claude users
+# (anthropic-ai and Claude-Web are older names)
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: anthropic-ai
+User-agent: Claude-Web
+Disallow: /
+
+# Google: Gemini training and grounding. Google-Extended is a separate opt-out
+# from Googlebot, so Google Search keeps crawling.
+User-agent: Google-Extended
+Disallow: /
+
+# Apple: AI training. Applebot (Siri and Spotlight search) keeps crawling.
+User-agent: Applebot-Extended
+Disallow: /
+
+# Meta: AI training and pages fetched for Meta AI users
+# (facebookexternalhit, the link-preview fetcher, isn't blocked)
+User-agent: Meta-ExternalAgent
+User-agent: meta-externalfetcher
+User-agent: FacebookBot
+Disallow: /
+
+# Perplexity: its AI search index and pages fetched for its users
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+Disallow: /
+
+# Amazon: Alexa answers and AI training
+User-agent: Amazonbot
+Disallow: /
+
+# ByteDance: AI training
+User-agent: Bytespider
+Disallow: /
+
+# Common Crawl: an open web archive that's widely used to train AI models
+User-agent: CCBot
+Disallow: /
+
+# Cohere: AI training
+User-agent: cohere-ai
+User-agent: cohere-training-data-crawler
+Disallow: /
+
+# Other AI assistants, AI search engines and AI-answer fetchers
+User-agent: DuckAssistBot
+User-agent: MistralAI-User
+User-agent: YouBot
+User-agent: iaskspider
+Disallow: /
+
+# Other AI training crawlers and AI datasets
+User-agent: AI2Bot
+User-agent: Ai2Bot-Dolma
+User-agent: Diffbot
+User-agent: ImagesiftBot
+User-agent: img2dataset
+User-agent: omgili
+User-agent: Omgilibot
+User-agent: Webzio-Extended
+User-agent: PanguBot
+User-agent: Timpibot
+User-agent: FriendlyCrawler
+User-agent: ICC-Crawler
+Disallow: /
+
+# Everyone else, including search engines (Googlebot, Bingbot, DuckDuckBot,
+# Applebot and the rest)
+User-agent: *
+Allow: /
+
+Sitemap: {{ "/sitemap.xml" | absolute_url }}

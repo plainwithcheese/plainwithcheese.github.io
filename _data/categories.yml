@@ -1,0 +1,104 @@
+# Sections — the kinds of work. Each is a public archive at /menu/<slug>/
+# (one page per section in menu/<slug>.md) and a column on the home page.
+#
+#   slug     — URL segment and the value posts use in `category:`
+#   display  — section name
+#   code     — one or two letters used in item codes like "03-B". Must be
+#              unique; defaults to the first letter of `display` if omitted.
+#   gloss    — italic subhead on the section page, home page and About receipt
+#   license  — optional: the default license for this section's posts, a
+#              name from _data/licenses.yml (a post's own `license:` wins).
+#              Without it, the site default there applies.
+#   license_notice — true shows the build-your-own license notice
+#              (_data/license.yml) on the section page
+#   show_dates — optional true/false: show (or hide) post dates in this
+#              section's lists, overriding `show_dates_in_lists` in _config.yml
+#   end_mark — optional true: the end mark (the burger glyph) under this
+#              section's posts, for the formats listed under `end_mark` in
+#              _data/formats.yml. Burgers only.
+#   reading_time — optional true: show the estimated reading time under the
+#              dek ("Serving: est. 12 mins") on this section's posts whose
+#              format is listed under `reading_time` in _data/formats.yml.
+#   form     — optional: the form word for this section's posts: in the
+#              post's header line ("No. 04-B · Burgers ·
+#              short story"), its tab title ("· a short story ·") and the
+#              start of its share card's text ("A short story. …"). A post's
+#              own `form:` wins (_includes/post-form.html).
+#   never_special — optional true: this section's posts are never today's
+#              special (the newest post outside such sections;
+#              _includes/todays-special.html). Desserts.
+#   hidden   — optional true: a section that isn't open yet. It's left off
+#              the home page, the full menu and the About receipt, and the
+#              build fails on any post in it. Its page (menu/<slug>.md) needs
+#              `published: false` too; the build fails if that page is built.
+#              To open the section, remove both.
+#   home_order — the section's place on the home page (1 first). The home
+#              page has its own order; everywhere else uses this file's.
+#   home_wide — optional true: on the home page the section spans both
+#              columns and shows its newest six posts in two columns of
+#              three, reading across (newest top left, then top right);
+#              three on phones. Give it the first `home_order`.
+#
+# Order matters. This file's order is the menu order: the full menu (/menu/)
+# and the About receipt list the sections in it (Burgers, Sides, Desserts,
+# Drinks, Build Your Own, Meals). The home page
+# uses `home_order` instead: Burgers across both columns, then the rest in
+# pairs, left then right (Sides | Desserts, then Drinks), with a final odd one
+# out centered on its own row. Today's special isn't listed again in its own
+# section unless it's that section's only post (_layouts/home.html). Hidden
+# sections, and on the home page and full menu sections with no posts yet,
+# are skipped, and the rest re-pair.
+#
+# What goes where: fiction in Burgers; verse in Sides (songs
+# too, when there are any); sketches and paintings in Desserts; blogs and
+# essays in Drinks.
+
+
+- slug: fiction
+  display: Burgers
+  code: B
+  home_order: 1
+  home_wide: true
+  gloss: "The house specialty; short stories & other fiction"
+  form: short story
+  end_mark: true
+  reading_time: true
+
+- slug: verse
+  display: Sides
+  code: S
+  home_order: 2
+  gloss: "Add a side; verse"
+  form: poem
+
+- slug: art
+  display: Desserts
+  code: D
+  home_order: 3
+  gloss: "Sweet & bitter treats; sketches & paintings"
+  form: painting
+  never_special: true     # art is never today's special
+
+- slug: essays
+  display: Drinks
+  code: R                 # D is Desserts'
+  home_order: 4
+  gloss: "Something to sip on; blogs & essays"
+  form: essay
+  reading_time: true
+
+- slug: build-your-own
+  display: Build Your Own
+  code: Y
+  home_order: 6
+  gloss: "Take it home and finish it yourself; free ideas, free to use"
+  license: "CC BY 4.0"
+  license_notice: true
+
+- slug: scripts
+  display: Meals
+  code: M
+  home_order: 5
+  gloss: "The whole order; screenplays & scripts"
+  license: "All rights reserved"
+  hidden: true

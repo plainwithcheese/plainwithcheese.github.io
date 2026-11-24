@@ -1,0 +1,47 @@
+{%- comment -%}
+  A post's `created:`: when the piece was made. The post's
+  `date` is the day it went up, and everything that sorts by date uses that.
+  Optional: a full date (YYYY-MM-DD) or a year alone (YYYY) when the day
+  isn't known. Sets:
+    created_iso — "2021-04-30" or "2021" ("" when unset)
+    created_str — as Kitchen Facts shows it: "Apr 30, 2021" or "2021"
+  Kitchen Facts shows it as "Created", above "Published", on any post that
+  sets it (any section, e.g. older writing posted later).
+  New work leaves it out: its `date` is the day it goes up.
+
+  Validates (build FAILS via the missing-include trick): it's a date or a
+  year, and it isn't later than the post's `date`.
+
+  Param: post
+{%- endcomment -%}
+{%- assign created_iso = "" -%}
+{%- assign created_str = "" -%}
+{%- if include.post.created -%}
+  {%- assign cd_raw = include.post.created | append: "" | strip -%}
+  {%- assign cd_pub = include.post.date | date: "%Y-%m-%d" -%}
+  {%- if cd_raw.size == 4 -%}
+    {%- assign cd_year = cd_raw | plus: 0 -%}
+    {%- assign cd_back = cd_year | append: "" -%}
+    {%- if cd_back != cd_raw or cd_year < 1000 -%}
+      {%- include errors/CREATED_IS_NOT_A_DATE-write-it-as-YYYY-MM-DD-or-a-year-alone-YYYY.html -%}
+    {%- endif -%}
+    {%- assign cd_pub_year = cd_pub | slice: 0, 4 -%}
+    {%- if cd_raw > cd_pub_year -%}
+      {%- include errors/CREATED_AFTER_PUBLISHED-created-is-later-than-the-post-date.html -%}
+    {%- endif -%}
+    {%- assign created_iso = cd_raw -%}
+    {%- assign created_str = cd_raw -%}
+  {%- else -%}
+    {%- comment -%} A date the filter can't read comes back unchanged, without the "|ok", so this also catches "2021-13-45" or "2021-02-30". {%- endcomment -%}
+    {%- assign cd_check = include.post.created | date: "%Y-%m-%d|ok" -%}
+    {%- assign cd_want = cd_raw | append: "|ok" -%}
+    {%- if cd_raw.size != 10 or cd_check != cd_want -%}
+      {%- include errors/CREATED_IS_NOT_A_DATE-write-it-as-YYYY-MM-DD-or-a-year-alone-YYYY.html -%}
+    {%- endif -%}
+    {%- if cd_raw > cd_pub -%}
+      {%- include errors/CREATED_AFTER_PUBLISHED-created-is-later-than-the-post-date.html -%}
+    {%- endif -%}
+    {%- assign created_iso = cd_raw -%}
+    {%- assign created_str = include.post.created | date: "%b %-d, %Y" -%}
+  {%- endif -%}
+{%- endif -%}

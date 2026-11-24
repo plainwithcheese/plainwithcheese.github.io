@@ -1,0 +1,34 @@
+---
+layout: default
+---
+{%- assign cat = page.category -%}
+{%- assign meta = site.data.categories | where: "slug", cat | first -%}
+{%- comment -%} A hidden section's page must have `published: false` (see _data/categories.yml). {%- endcomment -%}
+{%- if meta.hidden -%}
+  {%- include errors/HIDDEN_SECTION_PAGE_BUILT-add-published-false-to-its-menu-page.html -%}
+{%- endif -%}
+{%- assign display = meta.display | default: cat -%}
+{%- assign gloss   = meta.gloss -%}
+{%- comment -%} site.posts is already newest first, with same-day posts in code order; no re-sort, since one doesn't keep ties in order. {%- endcomment -%}
+{%- assign filtered = site.posts | where: "category", cat -%}
+{%- assign sorted = filtered -%}
+{%- include list-dates.html section=cat -%}
+
+<article class="archive">
+  <div class="archive__crumb"><a href="{{ '/menu/' | relative_url }}" class="archive__crumb-link">Menu</a> &middot; {{ display }}</div>
+  <header class="archive__title-block">
+    <h1 class="archive__title">{{ display }}</h1>
+    {%- if gloss %}<p class="archive__gloss">{{ gloss }}</p>{% endif %}
+  </header>
+  {%- if meta.license_notice %}
+  {% include license.html %}
+  {%- endif %}
+  <p class="archive__count archive__count--ruled">{{ sorted | size }} {% if sorted.size == 1 %}item{% else %}items{% endif %} &middot; sorted newest first</p>
+
+  <div class="menu-grid">
+    {%- for post in sorted -%}
+      {%- include item-code.html post=post -%}
+      {% unless list_dates %}{% include archive-card.html post=post code=item_code hide_date=true %}{% else %}{% include archive-card.html post=post code=item_code %}{% endunless %}
+    {%- endfor -%}
+  </div>
+</article>

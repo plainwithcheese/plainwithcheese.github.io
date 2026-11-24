@@ -1,0 +1,17 @@
+# Every file on the media host (media_url in _config.yml), by its path there.
+# The build fails if an artwork post names a file that isn't listed: its
+# full size, each copy in `widths`, and the WebP sibling of each (unless the
+# image sets `webp: false`). Add a picture's files here when they're uploaded.
+files:
+  - images/blue-pumpkin/blue-pumpkin.jpg
+  - images/blue-pumpkin/blue-pumpkin-800.jpg
+  - images/blue-pumpkin/blue-pumpkin-1200.jpg
+  - images/blue-pumpkin/blue-pumpkin.webp
+  - images/blue-pumpkin/blue-pumpkin-800.webp
+  - images/blue-pumpkin/blue-pumpkin-1200.webp
+  - images/jellyfish/jellyfish.jpg
+  - images/jellyfish/jellyfish-800.jpg
+  - images/jellyfish/jellyfish-1200.jpg
+  - images/jellyfish/jellyfish.webp
+  - images/jellyfish/jellyfish-800.webp
+  - images/jellyfish/jellyfish-1200.webp

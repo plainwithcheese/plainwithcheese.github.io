@@ -1,0 +1,22 @@
+# Anthologies — sets of complete, standalone pieces that belong together
+# (like a short-story collection), which can span sections. Not to be
+# confused with a series: a series is one work in parts, read in order.
+#
+# A post joins one with `anthology: <slug>` in its front matter, plus an
+# optional `anthology_order:` (a whole number, 1 or more) to set its place in
+# the contents. Pieces with an order come first, by number; any without one
+# follow, oldest first.
+#
+# Each anthology also needs a page, anthologies/<slug>.md, whose front
+# matter is `layout: anthology`, `anthology: <slug>`, its `title:` (exactly
+# as here) and `permalink: /anthologies/<slug>/`; the page's content comes
+# from this file. The build fails if a post names an anthology that isn't
+# listed here or has no page, or if two pieces share an order.
+#
+#   slug        — URL segment and the value posts use in `anthology:`
+#   title       — the anthology's name
+#   description — Markdown, shown under the title on its page
+#   cover       — optional image, on the media host like a post's: images/<slug>/cover.jpg
+#   cover_alt   — describes the cover; required when `cover` is set
+
+[]

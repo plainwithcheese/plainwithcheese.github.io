@@ -1,0 +1,29 @@
+{%- comment -%}
+  Link text that may sit in square brackets, such as "[back to the Burgers
+  menu →]" or "[print]". The site's rule for bracketed links: the underline
+  runs under the text between the brackets only, never under the brackets or
+  a space next to them, and only on hover and keyboard focus.
+
+  Outputs the brackets as plain text and the text between them (trimmed) in
+  a span, .bracket-link__text. Text without brackets is wrapped whole, so the
+  include is safe on any link text, and a label that gains brackets later
+  gets the rule without changes.
+
+    <a class="bracket-link" href="…">{% include bracket-text.html text=label %}</a>
+
+  The link (or button) takes the class `bracket-link`: the inner text is
+  underlined only on hover and keyboard focus, never at rest. See
+  "Bracketed links" in assets/css/main.scss.
+
+  Param: text
+{%- endcomment -%}
+{%- assign bt_text = include.text | strip -%}
+{%- assign bt_first = bt_text | slice: 0, 1 -%}
+{%- assign bt_last = bt_text | slice: -1, 1 -%}
+{%- if bt_first == "[" and bt_last == "]" and bt_text.size > 2 -%}
+  {%- assign bt_len = bt_text | size | minus: 2 -%}
+  {%- assign bt_inner = bt_text | slice: 1, bt_len | strip -%}
+  [<span class="bracket-link__text">{{ bt_inner }}</span>]
+{%- else -%}
+  <span class="bracket-link__text">{{ bt_text }}</span>
+{%- endif -%}

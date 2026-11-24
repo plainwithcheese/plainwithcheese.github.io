@@ -1,0 +1,135 @@
+# Text for the diner chrome on every page (_includes/diner-footer.html), the
+# home page's Specials panel, the end of a post, printing and the small print.
+# Change it here and it changes everywhere.
+
+footer:
+  counter_label: "now serving"        # left: "now serving: 482"
+
+  # The "now serving" number is a 3-digit number worked out from the clock
+  # (assets/js/diner.js), so every page and every visitor shows the same
+  # number at the same moment, and it changes on every page at once.
+  counter_tick_seconds: 45            # how often it changes
+  counter: "482"                      # shown only if JavaScript is off
+
+  # The 404 page's counter is broken (an easter egg): instead of
+  # a number it glitches (assets/js/counter-glitch.js), changing at most
+  # three times a second. `counter_broken` is its still value, shown without
+  # JavaScript or with reduced motion. Screen readers always hear
+  # "now serving: " and `counter_broken_label`, never the glitching.
+  # `counter_glitch` is the pattern:
+  #   reset     tries to reset to 000 and fails, then runs past 999
+  #   scramble  digits and stray characters, now and then a word
+  #   stuck     mostly the still value, with a short fit every few seconds
+  # `counter_glitch_seconds`: how long it glitches before settling on the
+  # still value for good (0 keeps it going).
+  counter_broken: "ERR"
+  counter_broken_label: "error"
+  counter_glitch: scramble
+  counter_glitch_seconds: 10
+
+  # Center: a "catalog line" naming the page, built per kind of page
+  # (_includes/diner-footer.html). Phones (480px and narrower) hide it, so
+  # the strip keeps to one line: "now serving" and the stamp.
+  #   post             (none: its code and section are above the title)
+  #   home             No. 24-D · Recent Items         (today's special's code)
+  #   section page     Burgers · 5 items               (its name and post count)
+  #   full menu        Full Menu · 24 items
+  #   about            Order No. 0026 · About          (the receipt's order no.)
+  #   series           Series · 2 parts
+  #   anthology        Anthology · 3 items
+  #   anthologies      Anthologies · 2 anthologies
+  #   dialogue page    No. 16-B · dialogue             (its post's code)
+  #   404              No. 404 · Not on the Menu
+  # Any other page uses `catalog` below. Any page, posts included, can set
+  # its own line with `catalog:` in its front matter, which wins over all of
+  # the above.
+  catalog: "No. 47-B · Spring Catalog"
+  catalog_home: "Recent Items"            # the home page's line, matching the panel's label (specials.label)
+  catalog_not_found: "Not on the Menu"    # reuses the 404 page's subtitle
+
+  # Right, the tilted stamp: one entry (a word or short phrase) picked at
+  # random on each page load, never the same as the previous page's. The
+  # first is used without JS.
+  stamps:
+    - FRESH
+    - SIZZLING
+    - CRISPY
+    - TOASTED
+    - GOLDEN
+    - MELTY
+    - ORDER UP
+    - ON THE HOUSE
+    - WELL DONE
+    - TO GO
+  stamp_not_found: STALE              # the 404 page always shows this instead
+
+# The About receipt's order number isn't set here: it's "00" plus the build
+# year's last two digits (0026 in 2026, 0027 in 2027), from the same clock as
+# the footer's © year, so the two agree (_layouts/about.html and the About
+# page's catalog line in _includes/diner-footer.html).
+
+# The home page's "today's specials" panel (the newest post, above the
+# sections). The heading and gloss use the same treatment as the sections'.
+specials:
+  label: "Recent Items"               # small red label, top left of the panel
+  heading: "Specials"
+  gloss: "Fresh off the grill; what’s new"
+
+# Reading time under a post's dek (_includes/reading-time.html):
+# "<label> <minutes> <one or many>", e.g. "Serving: est. 12 mins".
+serving:
+  label: "Serving: est."
+  one: "min"
+  many: "mins"
+
+# The end of a post (_layouts/post.html). %section% becomes the post's section
+# name. The back link keeps its brackets (they mark a standalone link).
+post_end:
+  back: "[back to the %section% menu →]"     # to the post's section page
+  back_full_menu: "[back to the full menu →]" # the same link on the 404 page, which has no section: to /menu/
+  more_from: "More from %section%"            # what to read next: two more from the post's section
+  more_from_menu: "More from the menu"        # when the section has fewer than two others: the newest elsewhere
+  pairs_label: "Pairs well with"              # a post's own pick (`pairs_well_with:`), first
+  # The label at the end of a post: the post's facts as a small table, under
+  # its title, with the row names.
+  label:
+    title: "Kitchen Facts"
+    published: "Published"
+    created: "Created"     # a post's `created:` (when the piece was made), above "Published", on any post that sets it
+    updated: "Updated"
+    licensed: "Licensed"
+    anthology: "Anthology"   # a Kid's Menu piece that's also in an anthology: the anthology's row (the Kid's Menu takes the line at the top)
+    made: "Made"
+    # Each revision's line under "Updated":
+    # %date% is the revision's date ("Oct 11, 2026"), %note% its note.
+    update_note: "%date% — %note%"     # an em dash, spaced like the site's others
+
+# Printing (the print styles at the end of assets/css/main.scss).
+print:
+  pdf_label: "Served as a PDF:"       # starts the line a PDF viewer prints instead: "Served as a PDF: Title · link"
+  button_text: "[print]"              # the print button, under Kitchen Facts
+  button_tip: "Print this piece"      # its hover tooltip
+  button_label: "Print this piece"    # what screen readers hear (contains the visible word, for voice control)
+  address_label: "From the kitchen of:"   # before the site's address, the last printed line
+  anthology_label: "From the anthology:"    # anthology posts: under the printed byline, before the anthology's name
+
+# The copy-link control beside "[print]" at the end of a post: it copies
+# the post's address only, with no tracking, and is
+# hidden without JavaScript, like "[print]".
+copy_link:
+  text: "[copy link]"   # the control
+  copied: "[copied]"    # shown for a moment after it copies
+  failed: "[copy failed]"   # shown for a moment if the browser won't copy
+  tip: "Copy link to this piece"       # its hover tooltip, like print's
+  label: "Copy link to this piece"     # what screen readers hear; it starts with the visible words "copy link", so voice control can say them (WCAG 2.5.3)
+  feed_label: "Copy link"              # the feed page's control, which copies the feed's address (no tooltip)
+follow:
+  text: "[follow]"      # after [copy link] at the end of a post: a plain link to the Feed page (/feed/), shown with or without scripts
+
+# Small print under the strip (was the inner pages' colophon footer).
+colophon:
+  credits: "Site template dreamed with Claude"   # the typefaces and Jekyll are on the About receipt (TYPESET IN, OVEN)
+  # The license after "© <year> · <site title> ·" is the page's own license;
+  # the site default and the list are in _data/licenses.yml. On pages that
+  # aren't posts, license_note follows it (posts state their own license).
+  license_note: "unless noted"

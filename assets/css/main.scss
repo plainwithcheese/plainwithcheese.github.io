@@ -1,0 +1,3844 @@
+---
+# Front matter triggers Jekyll's SCSS converter.
+---
+
+@import "fonts";
+
+:root {
+  color-scheme: light;   // dark mode (end of this file) switches it
+  --ink:       #19170E;
+  --ink-soft:  #6A5C45;   // 5.66:1 on the page, 6.01 on panels, 6.50 on white
+  --ink-dek:   #3E3728;   // a dark dek ink (10.3:1 on --bg); not used directly now, but --ink-mid is set from it
+  --ink-mid:   #5A4E3B;   // all deks (post and listing) and section glosses: halfway between --ink-dek and --ink-soft (7.1:1 on --bg)
+  --bg:        #F7EFD8;
+  --paper:     #FAF6E8;
+
+  --accent-claude: #D97757;
+  --accent-gpt:    #10A37F;
+  --accent-gemini: #4285F4;
+
+  --font-display: "IM Fell DW Pica SC", "Times New Roman", serif;
+  --font-body:    "Source Serif 4", "Times New Roman", serif;
+  --font-mono:    "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+// Titles in lists (menu rows, section cards, "More from", series links,
+// anthology names). A title that wraps keeps its lines close, 1.25 apart, so
+// it reads as one item; the padding gives back the rest of the open line
+// height, so a one-line title keeps the same air. $open is that open line
+// height.
+@mixin list-title-lines($open) {
+  line-height: 1.25;
+  padding-top: ($open - 1.25) * 0.5em;
+  padding-bottom: ($open - 1.25) * 0.5em;
+}
+
+// Headings that were plain blocks, made headings for screen readers and
+// outlines (the home page's nameplate and courses, About's "GUEST CHECK", an
+// h2 under the page's title, the 404's "NOT ON THE MENU"):
+// no browser heading margins or bold. :where() keeps this at zero
+// specificity, so each class's own margins still apply.
+:where(h1.jar-title, h2.home-cat-hdr__title, h2.rec-big, h1.not-found__subtitle) {
+  margin: 0;
+  font-weight: 400;
+}
+
+// Skip link: the first thing on every page. It stays above the top of the
+// window until it has keyboard focus, then drops in at the top left; it
+// jumps to <main id="main">. Words in _data/nav.yml (skip_link).
+.skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 6px 12px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 16px));
+  &:focus { transform: none; }
+}
+// The jump target takes focus without showing the ring round the whole page.
+main:focus { outline: none; }
+
+html { background: var(--bg); }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+// Inner pages (main is a child of body; the home page's is inside .home-wrap):
+// at least the window's height, with main taking any spare room, so on a short
+// page the footer sits at the bottom of the window, not mid-screen.
+body:has(> main) {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+
+  > .diner-wrap, > main { width: 100%; }
+  > main { flex: 1 0 auto; }
+}
+
+// A post ends a little closer to the red strip (52px from "How this was
+// made" rather than 68px), still clearly apart from the site footer.
+main:has(> article.post) { padding-bottom: 16px; }
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+// One keyboard-focus style site-wide: a 2px outline in the site's red, 2px
+// off the element, on every link, button and other focusable element (only
+// for keyboard focus; :focus-visible). The color is --focus-ring, the red by
+// default (--accent: 4.9:1 on the light page, 5.4:1 on the dark one). Places
+// with a different background set their own: the lightbox's close button
+// (over the dark backdrop) and the About receipt in dark mode.
+:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--accent));
+  outline-offset: 2px;
+}
+
+a:hover { text-decoration-thickness: 2px; }
+
+img { max-width: 100%; height: auto; display: block; }
+// A <picture> (a WebP source with its fallback) adds no box of its own: the
+// <img> inside is laid out exactly as it would be alone.
+picture { display: contents; }
+
+// ---- Utility classes ---------------------------------------------------------
+
+.u-smallcaps {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 11px;
+}
+
+.u-mono {
+  font-family: var(--font-mono);
+}
+
+// ---- Sitewide F-C colophon footer --------------------------------------------
+
+.sitewide-footer {
+  border-top: 1px dashed var(--ink-soft);
+  padding: 22px 24px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sitewide-footer__left {
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+.sitewide-footer__right {
+  font-family: var(--font-mono);
+}
+
+// ---- Post back breadcrumb ----------------------------------------------------
+
+.post__back-crumb {
+  margin-bottom: 20px;
+}
+
+.post__back-link {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; text-underline-offset: 2px; }
+}
+
+// Post header line: item code and section, e.g. "No. 21-A · Art, Verse & Songs"
+.post__kicker {
+  margin: 0 0 20px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.post__item-code { color: var(--accent); }
+
+.post__kicker-link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; text-underline-offset: 2px; }
+}
+
+// ---- Post / project layout ---------------------------------------------------
+
+.post__title-block {
+  position: relative;
+  margin: 0 0 28px;
+}
+
+.post__title {
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 48px;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .post__title { font-size: 36px; }
+}
+
+// Artwork titles: the parenthetical after the title ("Untitled (blue study)")
+// in the dek's voice, half the title's size (see post.html).
+.post__title-aside {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.5em;
+  letter-spacing: 0;
+  color: var(--ink-mid);
+}
+
+.post__dek {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 17px;          // below the 19px body, so it reads as a subtitle
+  line-height: 1.4;
+  color: var(--ink-mid);
+  margin: 12px 0 0;
+}
+
+@media (max-width: 480px) {
+  .post__dek { font-size: 16px; }
+}
+
+.post__banner {
+  margin: 0 0 28px;
+  text-align: center;
+
+  img {
+    border: 1.5px solid var(--ink);
+    width: 100%;
+    height: auto;
+  }
+
+  figcaption {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+}
+
+.post__infobox {
+  float: right;
+  width: 220px;
+  margin: 10px 0 16px 20px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  padding: 10px;
+  font-size: 11px;
+
+  img { border: 1.5px solid var(--ink); width: 100%; }
+
+  figcaption {
+    font-family: var(--font-body);
+    font-style: italic;
+    text-align: center;
+    margin: 6px 0;
+    font-size: 11px;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+
+  tr { border-bottom: 1px dotted var(--ink-soft); }
+  tr:last-child { border-bottom: 0; }
+
+  td { padding: 3px 0; vertical-align: top; }
+
+  .ib-key {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    width: 40%;
+  }
+}
+
+.post__body {
+  font-family: var(--font-body);
+  font-size: 19px;
+  line-height: 1.6;
+  // A word too long for the line (a URL, "idea/creation/…/whatever") breaks
+  // at the edge rather than running off a narrow screen.
+  overflow-wrap: break-word;
+
+  @media (max-width: 480px) { font-size: 18px; }
+
+  p { margin: 0 0 1.2em; }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: normal;
+    font-size: 24px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 48px 0 14px;
+  }
+
+  h3 {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-weight: normal;
+    font-size: 1em;           // the body size, so it never drops below the text
+    margin: 32px 0 12px;
+  }
+
+  blockquote {
+    margin: 32px 0;
+    padding: 0 0 0 20px;
+    border-left: 2px solid var(--ink-soft);
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  img { border: 1.5px solid var(--ink); }
+
+  figure { margin: 32px 0; text-align: center; }
+
+  figcaption {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+}
+
+// Post text is ragged right at every width, and words break only at a soft
+// hyphen typed into the text (&shy;), never automatically.
+.post__body {
+  text-align: left;
+  -webkit-hyphens: manual;
+  hyphens: manual;
+}
+
+// A printout's line being printed (see "Printout" below): wiped in left to
+// right, in one step per character.
+@keyframes printout-line {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+// ---- Post body: code, tables, footnotes --------------------------------------
+// Markdown output that had no styling of its own.
+
+.post__body {
+  // Inline `code`
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    padding: 0.05em 0.3em;
+    background: var(--paper);
+    border: 1px solid rgba(117, 102, 78, 0.35);
+    border-radius: 2px;
+  }
+
+  // Fenced code blocks (kramdown wraps them in .highlighter-rouge > pre)
+  pre {
+    margin: 0 0 1.4em;
+    padding: 12px 14px;
+    overflow-x: auto;   // long lines scroll inside the box, not off the page
+    background: var(--paper);
+    border: 1px solid var(--ink-soft);
+    border-left: 3px solid var(--ink-soft);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink);
+
+    code { padding: 0; border: 0; background: none; font-size: inherit; }
+  }
+
+  .highlighter-rouge { margin: 0 0 1.4em; }
+  .highlighter-rouge pre { margin: 0; }
+
+  // ---- Printout: dot-matrix on continuous-feed paper ----------------------
+  // A fenced code block whose language is `printout` (```printout … ```):
+  // lines a dot-matrix printer prints, one or many. kramdown outputs
+  // <pre><code class="language-printout">, with the text exactly as typed
+  // (straight quotes, "--", ":-)"). The paper is the <code>: green-bar bands
+  // every three lines, tractor-feed holes and perforations down both sides,
+  // torn top and bottom, all drawn in CSS. The type is Doto (_sass/_fonts.scss),
+  // a dot-matrix face. Long lines wrap inside the paper, so a phone never
+  // scrolls sideways. In dark mode the paper stays paper, dimmed, like the
+  // About receipt. `{: .printout--reveal}` on the line after the block prints
+  // it line by line as it scrolls into view (assets/js/printout.js); not with
+  // reduced motion, and without JavaScript it's simply there.
+  pre:has(> code.language-printout) {
+    margin: 0 0 1.4em;
+    padding: 0;
+    overflow: visible;
+    background: none;
+    border: 0;
+  }
+
+  code.language-printout {
+    --po-paper:  #FBFAF4;
+    --po-bar:    #E0ECD6;   // the green bands
+    --po-perf:   #BDB6A3;   // perforations and the holes' rims
+    --po-ink:    #23211C;   // 15.4:1 on the paper, 13.1:1 on the bands
+    --po-lh:     1.6em;     // one printed line
+    --po-margin: 26px;      // each tractor-feed strip
+
+    display: block;
+    padding: calc(var(--po-lh) * 0.5) calc(var(--po-margin) + 14px);
+    border: 0;
+    border-top: 1px dashed var(--po-perf);      // torn along the perforation
+    border-bottom: 1px dashed var(--po-perf);
+    border-radius: 0;
+    font-family: "Doto", var(--font-mono);
+    font-weight: 800;
+    font-size: 16px;
+    line-height: var(--po-lh);
+    color: var(--po-ink);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    text-align: left;
+    background-color: var(--po-paper);
+    background-image:
+      // tractor-feed holes, left and right: the page shows through
+      radial-gradient(circle, var(--bg) 0 3.4px, var(--po-perf) 3.4px 4.2px, transparent 4.7px),
+      radial-gradient(circle, var(--bg) 0 3.4px, var(--po-perf) 3.4px 4.2px, transparent 4.7px),
+      // perforations between the strips and the page
+      linear-gradient(var(--po-perf) 50%, transparent 0),
+      linear-gradient(var(--po-perf) 50%, transparent 0),
+      // the strips are plain paper
+      linear-gradient(var(--po-paper), var(--po-paper)),
+      linear-gradient(var(--po-paper), var(--po-paper)),
+      // green-bar bands, three lines each: the first line starts a green one
+      repeating-linear-gradient(var(--po-bar) 0 calc(var(--po-lh) * 3), var(--po-paper) calc(var(--po-lh) * 3) calc(var(--po-lh) * 6));
+    background-size:
+      var(--po-margin) calc(var(--po-lh) * 1.5),
+      var(--po-margin) calc(var(--po-lh) * 1.5),
+      1px 6px,
+      1px 6px,
+      var(--po-margin) 100%,
+      var(--po-margin) 100%,
+      100% calc(var(--po-lh) * 6);
+    background-position:
+      left 0 top 0,
+      right 0 top 0,
+      left var(--po-margin) top 0,
+      right var(--po-margin) top 0,
+      left top,
+      right top,
+      left 0 top calc(var(--po-lh) * 0.5);
+    background-repeat: repeat-y, repeat-y, repeat-y, repeat-y, no-repeat, no-repeat, repeat-y;
+
+    @media (max-width: 480px) {
+      --po-margin: 18px;
+      padding-left: calc(var(--po-margin) + 10px);
+      padding-right: calc(var(--po-margin) + 10px);
+      font-size: 14px;
+    }
+
+    // On standard-density screens the dots are drawn too faint at 800.
+    @media (max-resolution: 1.5dppx) { font-weight: 900; }
+
+    // Windows high-contrast modes: plain text on the system colors.
+    @media (forced-colors: active) { background-image: none; }
+  }
+
+  // The reveal (printout.js): each line is a block, printed left to right in
+  // steps, one after another. Without the script nothing here applies.
+  .printout__line { display: block; min-height: var(--po-lh); }
+  .printout--pending .printout__line { clip-path: inset(0 100% 0 0); }
+  .printout--printing .printout__line {
+    animation: printout-line var(--po-dur, 0.6s) steps(var(--po-steps, 12), end) var(--po-delay, 0s) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .printout--pending .printout__line,
+    .printout--printing .printout__line { clip-path: none; animation: none; }
+  }
+
+  // Tables
+  table:not(.post__infobox table) {
+    width: 100%;
+    margin: 0 0 1.4em;
+    border-collapse: collapse;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  th {
+    padding: 6px 10px 6px 0;
+    border-bottom: 1.5px solid var(--ink);
+    font-family: var(--font-display);
+    font-weight: normal;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  td {
+    padding: 7px 10px 7px 0;
+    border-bottom: 1px dashed var(--ink-soft);
+    vertical-align: top;
+  }
+
+  // Footnotes: small, under a rule, at the end of the post
+  .footnotes {
+    margin-top: 40px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+
+    ol { padding-left: 1.4em; }
+    p { margin: 0 0 0.4em; }
+  }
+
+  sup a, .reversefootnote { text-decoration: none; }
+}
+
+// ---- Figure include (post body) ----------------------------------------------
+// Caption is rendered as a "label pill" hanging from the bottom-center of
+// the image, not as a row below.
+
+.post__figure {
+  margin: 40px 0;
+  text-align: center;
+}
+
+.post__figure--captioned {
+  // Pill hangs ~12px below the image — add space below so it doesn't crowd
+  // the next paragraph.
+  margin-bottom: 56px;
+}
+
+.post__figure-frame {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.post__figure-frame img {
+  border: 1.5px solid var(--ink);
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.post__figure--narrow .post__figure-frame { width: 60%; }
+.post__figure--wide   .post__figure-frame { width: 100%; }
+.post__figure--full   .post__figure-frame { width: 100%; }
+
+.post__figure-pill {
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  border: 1px solid var(--ink);
+  padding: 3px 10px 4px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--ink);
+  // Captions are guaranteed short by the build-time character-limit check
+  // in `_includes/figure.html`. Pill stays single-line.
+  white-space: nowrap;
+  // Hard cap: bordered box never exceeds the image width, even if a future
+  // caption sneaks past the lint. Combined with the char limit, content
+  // always fits inside the cap without visible text overflow.
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.post__figure-num {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-right: 6px;
+}
+
+.post__figure-credit {
+  display: block;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-align: right;
+  margin-top: 14px;
+}
+
+// ---- Callouts (assets/js/callouts.js + _data/callouts.yml) -----------------
+// A blockquote starting with a [!kind] marker becomes <aside class="callout">.
+// The script sets --callout-color and --callout-bg from the preset or the
+// author's overrides. `aside.` qualifiers outrank `.post__body p` etc.
+
+aside.callout {
+  --callout-color: var(--ink-soft);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 32px 0;
+  padding: 12px 16px;
+  border: 1.5px solid var(--callout-color);
+  background: var(--callout-bg, color-mix(in srgb, var(--callout-color) 10%, var(--paper)));
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.callout__glyph {
+  flex: 0 0 28px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1;
+  padding-top: 3px;
+  color: var(--callout-color);
+}
+
+// Image glyph (preset `glyph_image`): an SVG used as a mask, tinted to the
+// callout color.
+.callout__glyph-image {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background: var(--callout-color);
+  -webkit-mask: var(--callout-glyph-url) center / contain no-repeat;
+  mask: var(--callout-glyph-url) center / contain no-repeat;
+}
+
+.callout__body {
+  flex: 1;
+  min-width: 0;
+
+  > :last-child { margin-bottom: 0; }
+}
+
+aside.callout p { margin: 0 0 0.8em; }
+
+aside.callout .callout__title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  // Title text is the callout color deepened with ink so small text stays
+  // readable (WCAG 4.5:1); border and glyph keep the pure color.
+  color: color-mix(in srgb, var(--callout-color) 83%, var(--ink));
+}
+
+// ---- Dialogue (_includes/dialogue.html, ai_excerpt.html) --------------------
+// --dlg-accent (from the participant's `accent`) tints the speaker line and
+// rule; default is ink.
+
+.dialogue {
+  margin: 32px 0;
+}
+
+.dialogue--framed {
+  // Roomier on desktop, tighter on phones so the text column stays usable
+  padding: 22px clamp(16px, 5vw, 32px) 10px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px dashed var(--ink-soft);
+}
+
+.post__body .dialogue__header {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.dlg-turn {
+  position: relative;
+  margin: 26px 0;
+
+  // The speaker's rule: left edge for most voices, right edge for the primary
+  &::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--dlg-accent, var(--ink));
+  }
+}
+
+.dlg-turn--other {
+  padding-left: clamp(18px, 4vw, 30px);
+  text-align: left;
+  &::before { left: 0; }
+}
+
+.dlg-turn--primary {
+  padding-right: clamp(18px, 4vw, 30px);
+  text-align: right;
+  &::before { right: 0; }
+  .dlg-turn__speaker { justify-content: flex-end; }
+}
+
+// Speaker line: {glyph} {monogram} {Name} {· model} {· edited}, all on one
+// optical center rather than a shared baseline.
+.post__body .dlg-turn__speaker,
+figure.dlg-excerpt figcaption.dlg-excerpt__speaker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dlg-accent, var(--ink));
+}
+
+// Name and monogram text: the accent deepened with ink so small text stays
+// readable (WCAG 4.5:1). Glyph, monogram border and rules keep the pure accent.
+.dlg-name,
+.dlg-monogram {
+  color: color-mix(in srgb, var(--dlg-accent, var(--ink)) 68%, var(--ink));
+}
+
+.dlg-glyph {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.dlg-glyph-svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+// A speaker's default mark (prov-mark.html: pen-line for a human, bot for an
+// AI), sized to sit with the 16px site glyph (whose burger fills about the
+// middle two-thirds of its box) and centered like it.
+.dlg-glyph .prov-mark { font-size: 13px; }
+.dlg-glyph .prov-mark__icon { display: block; }
+
+.dlg-monogram {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+  border: 1px solid var(--dlg-accent, var(--ink));
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+}
+
+.dlg-model {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  color: var(--ink-soft);
+}
+
+.dlg-edit {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+.dlg-turn__body > :last-child { margin-bottom: 0; }
+
+// Single-passage excerpt: 3px ink bar, then (with an accent) an 8px gap and
+// a 2px accent bar, "double, gapped" (the gap wide enough that the two bars
+// read as separate lines).
+figure.dlg-excerpt {
+  position: relative;
+  margin: 32px 0;
+  // Matches the framed dialogue's spacing; tighter on phones
+  padding: 22px clamp(16px, 5vw, 32px);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--ink-soft);
+  border-left: 3px solid var(--ink);
+  text-align: left;
+
+  > :last-child { margin-bottom: 0; }
+}
+
+figure.dlg-excerpt--accent {
+  padding-left: clamp(22px, 5vw, 38px); // extra room for the inset accent bar
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 8px;
+    width: 2px;
+    background: var(--dlg-accent);
+  }
+}
+
+figure.dlg-excerpt figcaption.dlg-excerpt__speaker { margin-bottom: 6px; }
+
+// Link from a post to its standalone dialogue, and the standalone page itself
+.post__dialogue-link {
+  margin: 32px 0 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+
+  a { color: var(--ink); text-underline-offset: 3px; }
+}
+
+// Several dialogues for one post: a small label over a plain list of links
+.post__dialogue-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--ink-soft);
+}
+
+.post__dialogue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li + li { margin-top: 6px; }
+}
+
+.dialogue-page__kicker {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+// ---- Post extras: series line, content notes, provenance note --------------
+
+.post__serving,
+.post__series,
+.post__content-notes {
+  margin: 10px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+
+  a { color: var(--ink-soft); text-underline-offset: 2px; }
+}
+
+.post__content-notes-label {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+// ---- Content notes and the content-warning gate ----------------------------
+// "[content notes]" under the dek, on any post with `content_notes`: a
+// bracketed control like [print] (the notes' 11px mono, in the small-print
+// ink, "content notes" underlined on hover and keyboard focus). Opened, the
+// notes follow it on the same row in the same type, wrapping like ordinary
+// text; a second click closes them. The control is an empty <details>, so it
+// works with scripts off; the list is the span after it, hidden while it's
+// closed. That rule uses :has(), so a browser without it simply shows the
+// list. The words: _data/content_warning.yml.
+.post__contents-line {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+.post__contents-line:has(> .post__contents:not([open])) > .post__contents-list { display: none; }
+.post__contents { display: inline-block; }
+.post__contents-toggle {
+  display: inline;
+  list-style: none;
+  cursor: pointer;
+  color: var(--ink-soft);
+
+  &::-webkit-details-marker { display: none; }
+  &::marker { content: ""; }
+  &:hover, &:focus-visible { color: var(--ink); }
+}
+// The plain line print uses instead of the control (see the print styles).
+.post__content-notes--print { display: none; }
+
+// The gate (`content_warning: true`). The piece keeps its place in the
+// layout, heavily blurred, and
+// the warning floats over it as a centered card that stays in view while the
+// reader scrolls the blurred part (sticky, in a layer spanning it).
+//
+// What's blurred isn't the real text. Until the reader serves the post, the
+// real content (everything marked .gated: the banner or infobox, a format
+// block, the body, the end mark) is `visibility: hidden`, which keeps it out
+// of screen readers, keyboard focus, selection, copy and find-in-page, like
+// `inert` plus `aria-hidden`, but undone by CSS alone, so "Serve anyway once"
+// works with scripts off. In its place each part draws a stand-in (::after):
+// soft blurred bars at the text's line pitch, or for a picture the picture
+// itself, heavily blurred (from --cw-img, set in post.html). Nothing legible
+// is ever on screen. Once served, the stand-in fades out (instantly with
+// reduced motion) over the real piece.
+.cw-zone { position: relative; }
+.cw-layer {
+  display: none;            // shown only while the gate is up (below)
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.cw {
+  position: sticky;
+  top: max(24px, 22vh);
+  width: min(100%, 460px);
+  margin: 36px auto 0;
+  padding: 20px 22px 22px;
+  border: 1px solid var(--ink-soft);
+  background: var(--bg);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.16);
+  text-align: center;
+  pointer-events: auto;
+}
+.cw__message {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--ink);
+  text-wrap: balance;
+}
+// "[content notes]" named in the message, set like the control it points to.
+.cw__ref {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.78em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.cw__choices {
+  display: none;            // shown while "[content notes]" is open (below)
+  flex-direction: column;   // one per line, centered
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+// The choices: small bordered buttons in the display face, inverted on hover
+// and keyboard focus. "Serve anyway once" is a <details> summary (no-script
+// safe); the two "always" buttons appear only when the script can store them.
+.cw__serve { display: block; width: min(100%, 240px); }
+.cw__serve > .cw__choice { display: block; width: 100%; }   // a summary, sized like the two buttons
+.cw__choice {
+  display: inline-block;
+  width: min(100%, 240px);  // the three stacked at one width
+  box-sizing: border-box;
+  text-align: center;
+  list-style: none;
+  cursor: pointer;
+  margin: 0;
+  padding: 5px 12px 4px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+
+  &::-webkit-details-marker { display: none; }
+  &::marker { content: ""; }
+  &:hover, &:focus-visible { background: var(--ink); color: var(--bg); }
+  &[hidden] { display: none; }
+}
+
+// The stand-ins. Present on every gated part, invisible until the gate is up.
+.post--gated .gated { position: relative; }
+.post--gated .gated::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.45s ease, visibility 0s linear 0.45s;
+  // Bars at the body's line pitch (1.6em), in the band where lowercase sits,
+  // blurred to soft streaks; clipped to the part's own box.
+  background-image: repeating-linear-gradient(to bottom,
+    transparent 0, transparent 0.5em,
+    color-mix(in srgb, var(--ink) 28%, transparent) 0.5em,
+    color-mix(in srgb, var(--ink) 28%, transparent) 1.08em,
+    transparent 1.08em, transparent 1.6em);
+  filter: blur(7px);
+  clip-path: inset(0);
+}
+.post--gated .gated[style*="--cw-img"]::after {
+  background: var(--cw-img) center / cover no-repeat;
+  filter: blur(40px) saturate(0.8);   // shapes gone, only color masses left
+}
+.post--gated .post__end-mark.gated::after { content: none; }
+@media (prefers-reduced-motion: reduce) {
+  .post--gated .gated::after { transition: none; }
+}
+
+// With an "always" choice in effect, the card never shows. "[content notes]"'s
+// reveal carries the status instead: under the notes, in the same mono and
+// size ("Content warnings disabled for this post [Reset content warnings]"),
+// only while "[content notes]" is open. The reset needs the
+// script, as the choice does. The page's root carries data-cw-off="post" or
+// "all".
+.post__contents-off { display: none; margin-top: 2px; }
+:root[data-cw-off] .post__contents-line:has(> .post__contents[open]) > .post__contents-off { display: block; }
+.cw-off__post, .cw-off__all { display: none; }
+:root[data-cw-off="post"] .cw-off__post,
+:root[data-cw-off="all"] .cw-off__all { display: inline; }
+// The second reset, after [print] [copy link]: only while an "always" choice
+// is in effect. (The row itself shows only with scripts, and never prints.)
+.post-tools .cw-reset-end { display: none; }
+:root[data-cw-off] .post-tools .cw-reset-end { display: inline-block; }
+.cw-off__on {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover, &:focus-visible { color: var(--ink); }
+}
+
+// The gate is up (on screen only) until the reader serves the post: "Serve
+// anyway once" open, or a stored "always" choice. The choices show while
+// "[content notes]" is open. These rules use :has(), so a browser without it
+// drops them and gets no gate at all: the piece shows as normal, with no
+// card.
+// :has() is in Chrome and Edge 105+, Safari 15.4+ and Firefox 121+.
+@media screen {
+  :root:not([data-cw-off]) .post--gated:not(:has(.cw__serve[open])) {
+    .gated { visibility: hidden; }
+    .gated::after { visibility: visible; opacity: 1; transition: none; }
+    .cw-layer { display: block; }
+    // The zone ends with the text (the end mark sits after it), so the sticky
+    // card stops at the bottom of the text and scrolls away with it. On a
+    // short piece the zone is at least tall enough
+    // for the open card with 36px above and below (so it sits centered), and
+    // the body stretches to fill it: the blurred area grows rather than the
+    // card spilling past it. The open card measured 209px on desktop and
+    // 234px on phones (re-measure if its wording changes).
+    .cw-zone { display: flex; flex-direction: column; min-height: calc(209px + 72px); }
+    .cw-zone > .post__body { flex: 1 0 auto; }
+    @media (max-width: 480px) { .cw-zone { min-height: calc(234px + 72px); } }
+  }
+  .post--gated:has(.post__contents[open]) .cw__choices { display: flex; }
+}
+
+// ---- Bracketed links ----------------------------------------------------------
+// The site's rule: in a link whose text sits in square brackets ("[back to
+// the Burgers menu →]", "[print]"), the underline runs under the text between
+// the brackets only, never under the brackets or a space next to them, and
+// only on hover and keyboard focus.
+// _includes/bracket-text.html puts that text in .bracket-link__text; the link
+// (or button) carries .bracket-link. The link itself never draws an underline
+// (!important, to beat link styles that underline the whole <a> on hover);
+// the inner text does. Hover and focus still apply to the whole link, so the
+// click area is unchanged.
+.bracket-link,
+.bracket-link:hover,
+.bracket-link:focus-visible { text-decoration: none !important; }
+
+// Underlined only on hover and keyboard focus, never at rest.
+.bracket-link .bracket-link__text {
+  text-decoration: none;
+  text-underline-offset: var(--bracket-underline-offset, 2px);
+}
+.bracket-link:hover .bracket-link__text,
+.bracket-link:focus-visible .bracket-link__text { text-decoration: underline; }
+
+// The end of a post: the end mark; then what to read next ("More
+// from <Section>", or a series' parts); the back-to-the-menu link; the label
+// (the post's facts as a small table, with "How this was made" as its fine
+// print); then "[print]" and "[copy link]".
+.post__end-mark {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0 0;
+  color: var(--ink);
+
+  .dlg-glyph-svg { width: 24px; height: 24px; }
+}
+
+.post-next { margin: 32px 0 0; }
+
+.post-next > * + * { margin-top: 24px; }
+
+.post-next__back {
+  --bracket-underline-offset: 3px;
+  margin: 24px 0 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+
+  a { color: var(--ink); text-underline-offset: 3px; }
+}
+
+// Previous/next: a series' parts, or the section's older and newer posts.
+.series-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 0 0;
+  border-top: 1px dashed var(--ink-soft);
+}
+
+.series-nav__link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+.series-nav__title { @include list-title-lines(1.55); }
+
+.series-nav__link--next { grid-column: 2; text-align: right; }
+
+.series-nav__dir {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+// /series/ page
+.series-index__group { margin: 32px 0 0; }
+
+.series-index__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+}
+
+.series-index__parts {
+  margin: 8px 0 0;
+  padding-left: 1.6em;
+  font-size: 17px;
+
+  li { margin: 6px 0; }
+  a { color: var(--ink); text-underline-offset: 3px; }
+}
+
+.series-index__dek {
+  display: block;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+// ---- Anthologies -------------------------------------------------------------
+// A post's "From the anthology: …" line: a second line of the item-code
+// kicker above the title, in the same small caps.
+.post__anthology {
+  display: block;
+  margin-top: 6px;
+}
+
+// /anthologies/<slug>/: cover, description, then the contents (menu rows,
+// with each piece's section under its title; see menu-row.html).
+.anthology__cover {
+  margin: 20px 0 24px;
+
+  img {
+    max-width: min(100%, 320px);
+    border: 1.5px solid var(--ink);
+  }
+}
+
+.anthology__description {
+  margin: 0 0 20px;
+
+  p { margin: 0 0 1em; }
+  > :last-child { margin-bottom: 0; }
+}
+
+.anthology__contents {
+  margin: 0 0 24px;
+
+  // More air than the home and full-menu lists, so each piece reads as its
+  // own item; same menu-row look.
+  .menu-index__row { padding: 14px 0; }
+  .menu-index__row-section { margin: 3px 0 2px; }
+  .menu-index__row-excerpt { padding-top: 3px; }
+}
+
+// /anthologies/ index (only linked once there are two or more).
+.anthology-index__item {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 20px 0;
+  border-bottom: 1px dashed var(--ink-soft);
+}
+
+.anthology-index__cover-link { flex: 0 0 96px; }
+
+.anthology-index__cover {
+  width: 96px;
+  border: 1.5px solid var(--ink);
+}
+
+.anthology-index__body { min-width: 0; }
+
+.anthology-index__name {
+  margin: 0 0 2px;
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  @include list-title-lines(1.55);
+
+  a { color: var(--ink); text-decoration: none; --bracket-underline-offset: 3px; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+.anthology-index__name + .archive__count { margin-bottom: 10px; }
+
+.anthology-index__description p { margin: 0 0 0.8em; }
+
+// "More from <Section>": two more pieces to read, each a title and its dek,
+// under a small heading (or "More from the menu", or "Pairs well with").
+.more-from { margin: 32px 0 0; padding-top: 14px; border-top: 1px dashed var(--ink-soft); }
+.more-from__head {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-weight: normal;   // an h2 (posts and the 404)
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-wrap: balance;   // the 404's longer heading wraps in two even lines on phones
+  &:not(:first-child) { margin-top: 16px; }
+}
+.more-from__item { display: block; padding: 8px 0; color: var(--ink); text-decoration: none; border-bottom: 1px dashed var(--ink-soft); }
+.more-from__title { display: block; font-family: var(--font-display); font-size: 17px; letter-spacing: 0.04em; @include list-title-lines(1.55); }
+.more-from__item:hover .more-from__title { text-decoration: underline; text-underline-offset: 3px; }
+.more-from__dek { display: block; margin-top: 2px; font-style: italic; font-size: 14px; line-height: 1.4; color: var(--ink-mid); }
+
+// The label ("Kitchen Facts"): the post's facts as a small table, quiet
+// enough not to outshout the story's last line: thin rules, the notes' small
+// mono, the muted ink. A small-caps title with one slightly heavier rule
+// under it is the Nutrition Facts signature, in a thin box in the muted ink
+// rather than the bold one. Names on the left, values on
+// the right; a revised post's update notes sit under "Updated", and "How this
+// was made" is its fine print.
+.post-label {
+  margin: 28px 0 0;
+  border: 1px solid var(--ink-soft);
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+
+  // The license link, treated like the nav links: a hairline on touchscreens;
+  // with a mouse or trackpad no line at rest and a darker one on hover.
+  a {
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -2px;
+      height: 1px;
+      background: var(--ink-soft);
+    }
+    &:hover::after { background: var(--ink); }
+
+    @media (hover: hover) and (pointer: fine) {
+      &::after { background: transparent; }
+      &:hover::after { background: var(--ink); }
+    }
+  }
+}
+.post-label__caption {
+  caption-side: top;
+  text-align: left;
+  padding: 8px 0 5px;
+  border-bottom: 2px solid var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+}
+// The caption's text is an h2 (post.html), in the caption's own type.
+.post-label__title {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+.post-label__table {
+  width: 100%;
+  border-collapse: collapse;
+  th, td { padding: 5px 0; font-weight: normal; text-align: left; vertical-align: baseline; }
+  td { text-align: right; }
+  tr + tr > * { border-top: 1px dotted color-mix(in srgb, var(--ink-soft) 45%, transparent); }
+}
+// The provenance mark (a Lucide icon, prov-mark.html) beside the mono.
+.post-label__mark {
+  font-size: 13px;
+  color: var(--ink);
+}
+.post-label__fine {
+  border-top: 1px solid var(--ink-soft);
+  padding: 8px 0 10px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.5;
+
+  p { margin: 0 0 0.6em; }
+  ul, ol { margin: 0 0 0.6em; padding-left: 1.3em; }
+  > :last-child { margin-bottom: 0; }
+}
+// Run-in label at the start of the note's first line
+.post-label__fine-label {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-right: 2px;
+}
+// A revised post's update notes: one dated line each under "Updated",
+// in the fine print's type, with no rule between them and their row.
+.post-label__table .post-label__updates > td {
+  border-top: 0;
+  padding: 0 0 8px;
+  text-align: left;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.post-label__notes { margin: 0; padding-left: 1.3em; }
+.post-label__notes li + li { margin-top: 3px; }
+
+// ---- Verse (format: verse, and verse.html blocks) ---------------------------
+// verse-lines.html wraps each source line in .verse__line and sets --indent
+// to its leading spaces. Each line is its own block with a hanging indent,
+// so a long line that wraps on a phone tucks in under itself. Verse is
+// centered by default (.verse--center); `verse_align: left` / align="left"
+// leaves it left-set.
+
+.verse {
+  margin: 28px 0;
+  font-family: var(--font-body);
+}
+
+.verse__stanza { margin: 0 0 1.2em; }
+
+.verse__line {
+  display: block;
+  padding-left: calc(var(--indent, 0) * 0.5em + 1.5em);
+  text-indent: -1.5em;
+}
+
+.verse--center {
+  text-align: center;
+
+  .verse__line {
+    padding-left: calc(var(--indent, 0) * 0.5em);
+    text-indent: 0;
+  }
+}
+
+// ---- Audio: self-hosted player and embeds ----------------------------------
+
+figure.audio-player {
+  margin: 32px 0;
+  padding: 14px 16px 12px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  text-align: left;
+}
+
+.post__body figure.audio-player figcaption.audio-player__title {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.audio-player__glyph { font-family: var(--font-body); }
+
+.audio-player__audio {
+  display: block;
+  width: 100%;
+  accent-color: var(--ink);
+  color-scheme: light;
+}
+
+.audio-player__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 16px;
+  margin-top: 8px;
+}
+
+.audio-player__caption {
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.audio-player__download {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-underline-offset: 2px;
+}
+
+// Embedded third-party player: 16:9 by default; fixed height when the
+// include sets one (SoundCloud, Bandcamp).
+figure.embed {
+  position: relative;
+  margin: 32px 0;
+  aspect-ratio: 16 / 9;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+
+  iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+}
+
+figure.embed--fixed {
+  aspect-ratio: auto;
+  height: var(--embed-height);
+}
+
+// ---- Gallery + lightbox -------------------------------------------------------
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
+  gap: 18px;
+  margin: 32px 0;
+}
+
+.post__body figure.gallery__item {
+  margin: 0;
+  text-align: left;
+}
+
+.gallery__link { display: block; }
+
+.post__body .gallery__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--paper);
+}
+
+.gallery__link:hover .gallery__img { outline: 2px solid var(--ink); outline-offset: 2px; }
+// Keyboard focus: the site's focus ring, drawn round the image rather than the inline link.
+.gallery__link:focus-visible { outline: none; }
+.gallery__link:focus-visible .gallery__img { outline: 2px solid var(--focus-ring, var(--accent)); outline-offset: 2px; }
+
+.post__body figure.gallery__item figcaption.gallery__caption {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+dialog.lightbox {
+  max-width: min(96vw, 1100px);
+  max-height: 96vh;
+  padding: 16px;
+  border: 1.5px solid var(--ink);
+  background: var(--bg);
+  color: var(--ink);
+
+  &::backdrop { background: rgba(25, 23, 14, 0.82); }
+}
+
+.lightbox__figure { margin: 0; text-align: center; }
+
+.lightbox__img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(96vh - 130px);
+  margin: 0 auto;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+}
+
+.lightbox__caption {
+  margin-top: 8px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+// prev · "2 of 4" · next, centered on their own row
+.lightbox__bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.lightbox__count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  min-width: 5em;
+  text-align: center;
+}
+
+.lightbox__btn {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--ink);
+  padding: 6px 12px;
+  min-height: 34px;
+  cursor: pointer;
+
+  &:hover { background: var(--ink); color: var(--bg); }
+}
+
+// Close: the usual image-lightbox "×", pinned to the top-right corner of the
+// screen over the dark backdrop, so the viewer itself spends no space on it.
+// The × is a drawn SVG (a font glyph never sits exactly centered), and the
+// translucent dark circle keeps it visible if a tall image pushes the viewer
+// up underneath it on a phone.
+.lightbox__close {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(25, 23, 14, 0.55);
+  color: #FAF6E8;
+  cursor: pointer;
+
+  svg { display: block; }
+
+  // The focus ring sits on the dark backdrop, so a lighter red keeps it
+  // above 3:1 there (3.7:1 in light mode, 6.3:1 in dark).
+  --focus-ring: #F07357;
+
+  &:hover, &:focus-visible { background: rgba(25, 23, 14, 0.85); }
+}
+
+// ---- Artwork: one work as the piece (_includes/format-artwork.html) ---------
+// The lead image as large as the column allows, but never taller than most of
+// the screen, so a tall painting is seen whole. Bordered like figures. Its
+// caption (italic) and the work's details (the notes' small mono) sit under
+// it, then any more images of the work as small square thumbnails. Every
+// image opens in the gallery's lightbox.
+
+.artwork {
+  margin: 8px 0 32px;
+  text-align: center;
+}
+
+.artwork__lead { margin: 0; }
+
+.artwork__link {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+  cursor: zoom-in;
+}
+
+.artwork__img {
+  display: block;
+  max-width: 100%;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+}
+
+// With the lead's size known (`width`/`height`, required on the media host,
+// passed as --aw-w/--aw-h), its box is set before the file arrives, so the
+// page doesn't jump when it loads. The link takes the width the picture will
+// have: the column, but never so wide that the picture passes 80% of the
+// screen's height, nor wider than the file itself (its 1.5px borders added).
+// The picture fills it, keeping its own proportions (its aspect-ratio comes
+// from the same attributes).
+.artwork__link[style] {
+  width: min(100%, calc((80vh - 3px) * var(--aw-w) / var(--aw-h) + 3px), calc(var(--aw-w) * 1px + 3px));
+}
+.artwork__link[style] .artwork__img {
+  width: 100%;
+  max-height: none;
+}
+
+.artwork__caption {
+  margin: 10px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink-mid);
+}
+
+.artwork__details {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+// Each " · " part wraps as a unit, like the small print's, but an inline
+// block rather than nowrap, so a part too long for the line still wraps
+// inside itself instead of overflowing.
+.artwork__part { display: inline-block; max-width: 100%; }
+
+.artwork__more {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.artwork__thumb {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+}
+
+.artwork__more-link:hover .artwork__thumb { outline: 2px solid var(--ink); outline-offset: 2px; }
+// Keyboard focus: the site's focus ring, drawn round the image, as in galleries.
+.artwork__link:focus-visible { outline: none; }
+.artwork__link:focus-visible img { outline: 2px solid var(--focus-ring, var(--accent)); outline-offset: 2px; }
+
+// ---- Script: screenplay title block ------------------------------------------
+
+.script-block {
+  margin: 8px 0 24px;
+  padding: 28px 16px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.script-block__kicker {
+  margin: 0 0 12px;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.script-block__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.script-block__meta {
+  margin: 12px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+// ---- Zine: cover and print note --------------------------------------------
+
+.zine-cover {
+  margin: 8px auto 24px;
+  max-width: 280px;
+
+  img {
+    display: block;
+    width: 100%;
+    border: 1.5px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink-soft);
+  }
+}
+
+.zine-print {
+  margin: 0 0 24px;
+  padding: 10px 14px;
+  border: 1px dashed var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.zine-print__label,
+.recipe-card__label,
+.license-note__label {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.zine-print__text > :last-child { margin-bottom: 0; }
+
+// ---- Recipe card + license ----------------------------------------------------
+
+.recipe-card {
+  margin: 8px 0 20px;
+  padding: 6px 20px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.recipe-card__row {
+  padding: 14px 0;
+
+  & + & { border-top: 1px dashed var(--ink-soft); }
+}
+
+.recipe-card__value {
+  margin: 0;
+
+  p { margin: 0 0 0.8em; }
+  > :last-child { margin-bottom: 0; }
+}
+
+.recipe-card__premise .recipe-card__value { font-style: italic; font-size: 18px; }
+
+.recipe-card__ingredients {
+  margin: 0;
+  padding-left: 1.2em;
+
+  li { margin: 2px 0; }
+}
+
+.license-note {
+  margin: 0 0 28px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--ink);
+  background: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  line-height: 1.5;
+
+  a { color: var(--ink); }
+}
+
+.license-note__text > :last-child { margin-bottom: 0; }
+
+// Shown only while _data/license.yml still holds the placeholder
+.license-note--placeholder { border-left-color: #8a2a1a; }
+
+.license-note__warning {
+  margin: 8px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8a2a1a;
+}
+
+// ---- PDF viewer (_includes/pdf.html + assets/js/pdf-embed.js) ---------------
+
+// `figure.` / `figcaption.` qualifiers outrank the generic `.post__body figure`
+// and `figcaption` rules (centered, italic) that would otherwise apply.
+figure.pdf-embed {
+  margin: 40px 0;
+  text-align: left;
+}
+
+// Page frame — same 1.5px ink border as figures. Holds a US-letter shape
+// until the first page loads, then takes that page's real proportions.
+.pdf-embed__print { display: none; }   // printed instead of the viewer (print styles)
+
+// Print-only lines (shown by the print styles): the byline under the dek and
+// the site's address at the end of the notes.
+.post__byline, .post__collection, .post__print-address { display: none; }
+
+.pdf-embed__frame {
+  position: relative;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  aspect-ratio: 8.5 / 11;
+  overflow: hidden;
+}
+
+.pdf-embed__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pdf-embed__status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+
+  &[hidden] { display: none; }
+}
+
+.pdf-embed__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--ink-soft);
+
+  // Nothing below the controls when both title and download are hidden
+  .pdf-embed--bare & { border-bottom: 0; }
+}
+
+.pdf-embed__btn {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--ink);
+  padding: 6px 12px;
+  min-height: 34px; // comfortable tap target
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
+  &:disabled { color: var(--ink-soft); border-color: var(--ink-soft); opacity: 0.5; cursor: default; }
+}
+
+.pdf-embed__pages {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.pdf-embed figcaption.pdf-embed__meta {
+  font-style: normal;
+  margin-top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding-top: 8px;
+}
+
+.pdf-embed__title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+}
+
+.pdf-embed__download {
+  margin-left: auto; // stays on the right when the title is hidden
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-underline-offset: 2px;
+}
+
+.pdf-embed__caption {
+  flex-basis: 100%;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+// ---- Archive layout (category + format) --------------------------------------
+
+.archive__crumb-link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; text-underline-offset: 2px; }
+}
+
+.archive__crumb {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+
+.archive__title-block {
+  margin: 0 0 8px;
+}
+
+.archive__title {
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 56px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  margin: 0;
+  text-transform: lowercase;
+}
+
+@media (max-width: 480px) {
+  .archive__title { font-size: 40px; }
+}
+
+.archive__gloss {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin: 6px 0 0;
+}
+
+.archive__count {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0 0 28px;
+}
+
+// Section pages: a red double rule closes the header, like the full menu's
+// section rules, before the first card.
+.archive__count--ruled {
+  padding-bottom: 10px;
+  border-bottom: 3px double var(--accent);
+  margin-bottom: 22px;
+}
+
+// ---- Menu-index card grid (shared by category + format archives) ------------
+
+.menu-grid {
+  // One card per row, each the full width of the 640px column (the width the
+  // old two-column grid took up together).
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+
+  @media (max-width: 720px) { gap: 16px; }
+}
+
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--ink-soft);
+}
+
+.menu-card__top {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+
+  @media (max-width: 480px) { flex-direction: column; gap: 8px; }
+}
+
+// On the right of the card, after the text, so every card's code
+// and title share one left edge; on phones it drops below the text, so the
+// title and the blurb keep the card's full width.
+.menu-card__thumb {
+  display: block;
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+
+  @media (max-width: 480px) { margin-top: 2px; }
+
+  object-fit: cover;
+  border: 1.5px solid var(--ink);
+  background-color: #d8cfb8;
+}
+
+.menu-card__content {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.menu-card__head {
+  // Item code, then the title (which wraps beside it), on one baseline
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.menu-card__title {
+  font-family: var(--font-display);
+  font-size: 17px;          // as the home rows and "More from"
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-decoration: none;
+  @include list-title-lines(1.45);
+}
+
+.menu-card__title:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.menu-card__code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--accent);     // red, like the menu rows' codes
+  white-space: nowrap;
+}
+
+.menu-card__date {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.menu-card__body {
+  margin: 6px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;          // the dek and the work line, as the home rows'
+  line-height: 1.45;
+  color: var(--ink-mid);
+}
+
+// An artwork post's work line, in the title's column (under the title, lined
+// up with the item code), rather than across the card like a dek.
+.menu-card__work { margin-top: 4px; }
+
+.menu-card__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 6px;
+}
+
+.menu-card__prov-label {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.menu-card__read-on {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.menu-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 6px;
+}
+
+.menu-card__tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+// The post's tools: "[print]" and "[copy link]" on their own row just under the
+// label, in its small mono type, inset to line up with the text in its box.
+// Hidden without JavaScript (copy-link.js shows the row) and in print. The
+// print tooltip is drawn in CSS (data-tip), so screen readers hear only its
+// name, which contains the visible word.
+.post-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-self: flex-start;
+
+  &[hidden] { display: none; }
+}
+// [print] and [copy link]'s wrapper (hidden until a script shows it): its
+// controls sit in the row as if it weren't there, with the row's spacing.
+.post-tools__js { display: contents; }
+.post-tools__js[hidden] { display: none; }
+// Inset 13px (the box's 1px border plus its 12px padding), so "[" lines up
+// with the text inside the box.
+.post-label + .post-tools { margin-top: 10px; padding-left: 13px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
+
+.copy-btn__done[hidden], .copy-btn__idle[hidden], .copy-btn__fail[hidden] { display: none; }
+
+// The feed page (/feed/): the feed's address in the notes' mono, with
+// "[copy link]" after it.
+.feed-page__address { margin: 18px 0; }
+.feed-page__url {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  margin-right: 12px;
+}
+.feed-page__copy { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+// The small-print note under the address: the site's small italic,
+// "[content notes]" set like the control; each sentence starts its own line,
+// and the box fits each on one line on desktop.
+.feed-page__note { margin: 4px 0 0; font-style: italic; font-size: 14px; color: var(--ink-soft); max-width: 38em; }
+.feed-page__copy[hidden] { display: none; }
+
+// Hidden on screen, still read by screen readers (the copy status).
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.post-tool {
+  position: relative;
+  display: inline-block;
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;          // the notes block's 11px mono
+  line-height: 1.4;
+  cursor: pointer;
+
+  // Darkens on hover and keyboard focus; the underline, under "print" only,
+  // comes from .bracket-link (see "Bracketed links").
+  &:hover, &:focus-visible { color: var(--ink); }
+
+  // The tooltips ("Print this piece", "Copy link to this piece") open above
+  // the word, so neither covers the other control beside it. WCAG 1.4.13:
+  // the pointer can move onto a shown tip without it closing (the 6px gap is
+  // the tip's own transparent border, part of the button's hover area), and
+  // Escape hides it (theme.js, .tip-off) until the pointer or focus leaves.
+  // The frame is an inset shadow, so it sits where the 1px border did.
+  &[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    padding: 3px 8px;
+    border-bottom: 6px solid transparent;
+    background-color: var(--bg);   // solid page color (light or dark): nothing shows through
+    background-clip: padding-box;
+    box-shadow: inset 0 0 0 1px var(--ink-soft);
+    color: var(--ink-soft);
+    font: italic 12px/1.4 var(--font-body);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s;
+    z-index: 2;
+  }
+  &:hover::after,
+  &:focus-visible::after { opacity: 1; pointer-events: auto; transition-delay: 0.3s; }
+  &.tip-off::after { opacity: 0; pointer-events: none; transition: none; }
+}
+
+
+
+// ---- S2 chip stamp (provenance, near title) ----
+
+.prov-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  border: 1.5px solid var(--ink);
+  padding: 3px 10px 2px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.prov-chip__glyph {
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+// ---- Home layout -----------------------------------------------------------
+
+.home-main {
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 48px 24px 56px;
+}
+
+// Jar wordmark — oval-framed label
+.jar-masthead {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.jar-frame {
+  display: inline-block;
+  border: 3px solid var(--ink);
+  border-radius: 50% / 18%;
+  // Side padding and title size scale down with the viewport so the jar
+  // fits a phone; both cap at their desktop sizes.
+  padding: 20px clamp(24px, 7vw, 60px) 16px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 0 0 1px var(--ink), 4px 4px 0 var(--ink-soft);
+  position: relative;
+  text-align: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid var(--ink-soft);
+    border-radius: 50% / 18%;
+    pointer-events: none;
+  }
+}
+
+.jar-eyebrow {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.jar-title {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 7.2vw, 52px);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  margin-top: 4px;
+  white-space: nowrap;
+  color: var(--ink);
+
+  em {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 0.68em;
+    padding: 0 0.1em;
+    color: var(--accent);
+    letter-spacing: 0;
+  }
+}
+
+.jar-caption {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+
+// Home editorial blurb
+.home-blurb {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-align: center;
+  margin: 0 0 40px;
+
+  p { margin: 0; }
+}
+
+// Home category menu — bill of fare
+.home-menu {
+  display: flex;
+  flex-direction: column;
+  border-top: 1.5px solid var(--ink);
+}
+
+.home-menu-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--ink-soft);
+  text-decoration: none;
+  color: var(--ink);
+
+  &:hover .home-menu-name { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+.home-menu-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.home-menu-rule {
+  flex: 1;
+  border-bottom: 1px dotted var(--ink-soft);
+  position: relative;
+  top: -3px;
+}
+
+.home-menu-gloss {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+
+.home-menu-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+
+// Home footer — own treatment, NOT the F-C colophon
+.home-footer {
+  border-top: 1px dashed var(--ink-soft);
+  padding: 16px 24px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.home-footer__left {
+  font-family: var(--font-body);
+  font-style: italic;
+
+  a { color: inherit; }
+}
+
+.home-footer__right {
+  font-family: var(--font-mono);
+}
+
+// ---- About — receipt layout ------------------------------------------------
+
+.receipt-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+// The passage above the receipt: the post body's type, in main's column
+// (the same width as a post's text). The title block above it is the
+// archive pages'.
+.about__title-block { margin-bottom: 24px; }
+.about__intro > p:last-child { margin-bottom: 0; }
+
+.receipt-wrapper {
+  max-width: 500px;
+  margin: 0 auto;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.12));
+  transform: rotate(-1deg); // laid on the counter slightly askew
+
+  // Phones: straight, so the small type stays crisp
+  @media (max-width: 480px) { transform: none; }
+}
+
+// CSS zigzag edges — triangles pointing into the paper
+.receipt-zigzag {
+  height: 10px;
+  background-color: #fafaf6;
+
+  &--top {
+    background-image:
+      linear-gradient(135deg, var(--bg) 33.33%, transparent 33.33%),
+      linear-gradient(225deg, var(--bg) 33.33%, transparent 33.33%);
+    background-size: 20px 10px;
+    background-repeat: repeat-x;
+    background-position: 0 100%;
+  }
+
+  &--bottom {
+    background-image:
+      linear-gradient(315deg, var(--bg) 33.33%, transparent 33.33%),
+      linear-gradient(45deg,  var(--bg) 33.33%, transparent 33.33%);
+    background-size: 20px 10px;
+    background-repeat: repeat-x;
+    background-position: 0 0;
+  }
+}
+
+.receipt {
+  background: #fafaf6;
+  padding: 32px 40px 28px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+
+  // Phones: less paper margin and smaller type so rows stay on one line
+  @media (max-width: 480px) {
+    padding: 24px 18px 20px;
+
+    .rec-row, .rec-line-item { font-size: 12px; letter-spacing: 0.03em; }
+    .rec-row--sub { font-size: 11px; }
+    .rec-row--total { font-size: 18px; }
+    .rec-header { letter-spacing: 0.16em; }
+  }
+}
+
+// The receipt's printed logo, above the header line: the favicon's burger
+// (32×32 pixel art) printed in the receipt's own ink on its own paper, a
+// duotone per theme (assets/img/receipt-logo-ink-light.png and -dark.png,
+// the dark one shown in dark mode, below). Scaled without smoothing, so its
+// pixels stay crisp.
+.rec-logo {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px;
+  image-rendering: pixelated;
+}
+.rec-logo--dark { display: none; }
+
+.rec-header {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--ink-soft);
+  margin: 4px 0;
+}
+
+.rec-big {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  margin: 8px 0 6px;
+
+  &--sm { font-size: 16px; }
+}
+
+.rec-hr {
+  border: none;
+  border-top: 1px dashed var(--ink-soft);
+  margin: 10px 0;
+
+  &--heavy { border-top: 2px solid var(--ink); }
+}
+// A section's last row and the rule after it read as a double rule, so they
+// get a little more air between them than the rule's own margin.
+.rec-row + .rec-hr, .rec-line-item + .rec-hr { margin-top: 14px; }
+
+.rec-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  // Long URLs wrap on phones instead of pushing the page wider
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+
+  &:hover { text-decoration-style: solid; }
+}
+
+.rec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px; // keeps label and value apart when a row wraps
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px dashed var(--ink-soft);
+  padding: 4px 0;
+
+  &--sub { color: var(--ink-soft); font-size: 12px; }
+
+  &--total {
+    font-size: 20px;
+    border-bottom: 2px solid var(--ink);
+    padding: 8px 0;
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+  }
+}
+
+.rec-spacer { height: 6px; }
+
+.rec-line-item {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 8px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  border-bottom: 1px dashed var(--ink-soft);
+  padding: 5px 0;
+  align-items: baseline;
+}
+
+.rec-qty {
+  color: var(--ink-soft);
+}
+
+// Keeps a phrase on one line (e.g. "ONGOING SINCE MMXXVI" in the header)
+.rec-nowrap { white-space: nowrap; }
+
+// A value with several items, stacked one per line and right-aligned, each
+// kept whole (CONTAINS, MAY CONTAIN, DOES NOT CONTAIN and TYPESET IN). The
+// commas between them are for screen readers only, so the items read as one
+// value.
+.rec-stack > span { display: block; white-space: nowrap; }
+
+// A row whose value (right) is in the muted sub-row ink, label unchanged
+// (the ALLERGENS and COLOPHON rows). `:last-child` covers a link value too
+// (SOURCE), which keeps its dotted underline.
+.rec-row--soft-value > :last-child {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+// A value that wraps (on phones: TYPESET IN, SOURCE) stays flush right.
+.rec-row > :last-child { text-align: right; }
+
+// Footnote mark on the LICENSE row and its note ("CC BY-NC 4.0*")
+.rec-fn {
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
+}
+
+.rec-item-name {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rec-sub {
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+// The feed note under RSS FEED (shown while a post is gated): smaller and
+// lighter than the line above it: 11px with no tracking on desktop, the 13px
+// floor on phones (the type sizes block near the end). Plex
+// Mono is loaded at 400 and 500 only, and the soft ink is already the
+// lightest that passes contrast, so "lighter" is the size and tracking.
+.rec-sub--note { letter-spacing: 0; }
+
+// ---- 404 -------------------------------------------------------------------
+
+.not-found {
+  text-align: center;
+  // No top padding: the "404" starts where every inner page's title does,
+  // 40px below the checker trim (the trim's margin and main's own padding).
+  // 64px below, so the back link sits as far above the footer strip as the
+  // About receipt does (132px to the strip's top rule). The side gutter is
+  // main's.
+  padding: 0 0 64px;
+  container-type: inline-size;   // the poem sizes itself to this column (below)
+}
+
+.not-found__numeral {
+  font-family: var(--font-display);
+  font-size: 96px;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-bottom: 8px;
+  // At this size the line holds about 35px of empty space above the figures,
+  // so it's pulled up until its ink starts where a page title's does (About,
+  // Feed, the full menu): 58px below the checker trim on desktop, 53px on
+  // phones, where the titles are smaller.
+  margin-top: -17px;
+
+  @media (max-width: 480px) { margin-top: -22px; }
+}
+
+.not-found__subtitle {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: var(--ink-soft);
+  margin-bottom: 28px;
+}
+
+// The poem: centered verse (the site's .verse markup) at the post body's
+// size. 36px and one of its lines below it (1.6em, so it follows the phone
+// size too): 66px to the dashed rule on desktop, 64px on a 390 phone.
+// ("More from"'s own 32px above it is taken into this, the larger margin.)
+.not-found__poem {
+  margin: 0 auto calc(36px + 1.6em);
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--ink);
+
+  // On phones, 18px, or smaller in a narrow column, so every line stays
+  // whole: the longest ("There’s more, elsewhere, for me to show.") is about
+  // 18.4 times the font size wide at 19px and nearer 19 times at phone sizes
+  // (the font's optical sizing widens small text), so the divisor is 19.6,
+  // with a little room to spare.
+  // 100cqw is the column's own width (any scrollbar already taken out); a
+  // browser without container units gets 18px and, at worst, one wrapped line.
+  @media (max-width: 480px) {
+    font-size: 18px;
+    font-size: min(18px, calc(100cqw / 19.6));
+  }
+}
+
+// "Here’s a Burger and a Side from the kitchen:" and the two picks are a
+// post's "More from" block, in its markup and
+// classes, so they share its type, rules, widths and spacing; only its
+// alignment is set here (the rest of the page is centered).
+.not-found .more-from { text-align: start; }   // as on a post
+
+// ---- Full menu index (/menu/) ----------------------------------------------
+
+.menu-index__section {
+  margin-bottom: 36px;
+}
+
+.menu-index__cat-hdr {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  border-bottom: 3px double var(--accent);   // like the diner footer strip's rules
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.menu-index__cat-title {
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+// Section name links to its section page, like "browse all"
+.menu-index__cat-title-link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+}
+
+.menu-index__cat-gloss {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-mid);
+  margin: 0;
+  flex: 1;
+}
+
+// Phones: heading and "browse all →" share the first line; the gloss gets
+// its own full-width line below instead of being squeezed between them.
+@media (max-width: 480px) {
+  .menu-index__cat-hdr { row-gap: 2px; }
+  .menu-index__cat-gloss { order: 3; flex: 0 0 100%; }
+  .menu-index__cat-link { margin-left: auto; }
+}
+
+.menu-index__cat-link {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+}
+
+.menu-index__rows {
+  display: flex;
+  flex-direction: column;
+}
+
+// Each row is an <a>: top line (code · title · glyph · leader · date)
+// + optional bottom line (indent · excerpt).
+
+.menu-index__row {
+  // Two columns: item code | title, date, then dek + provenance mark
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  column-gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--ink-soft);
+  text-decoration: none;
+  color: var(--ink);
+
+  &:hover .menu-index__row-name { text-decoration: underline; text-underline-offset: 2px; }
+}
+
+.menu-index__row-code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--accent);     // red, like the code line above a post's title (4.95:1 on --bg)
+  // Same line box as the 17px title, so the code centers on its first line
+  line-height: calc(17px * 1.55);
+}
+
+.menu-index__row-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.menu-index__row-name {
+  font-family: var(--font-display);
+  font-size: 17px;          // leads the 14px dek; IM Fell's small caps blur smaller
+  @include list-title-lines(1.55);
+  letter-spacing: 0.04em;
+  overflow-wrap: break-word;
+}
+
+// The piece's section, under its title (anthology contents only)
+.menu-index__row-section {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.menu-index__row-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.menu-index__row-excerpt {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-mid);
+  line-height: 1.4;
+  padding-top: 2px;
+}
+
+// Provenance mark — trails the dek
+.menu-index__row-prov {
+  font-style: normal;
+  font-size: 13px;
+}
+
+// The non-breaking space and the mark, kept together on the dek's last line
+.menu-index__row-tail { white-space: nowrap; }
+
+// Provenance marks: Lucide icons, inline SVGs from _includes/prov-mark.html.
+// Each is 1em square in
+// the text's color, so each context's font-size sets its size. Lucide draws
+// inside a 2px margin of its 24px box, so the drawing is about 0.83em tall;
+// dropped 0.15em, its foot sits on the baseline and its top near the
+// capitals'. No size bump for the hand: the icons share one box.
+.prov-mark__icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  overflow: visible;
+}
+
+// The marks get the darkest ink wherever they appear, whatever the text
+// around them uses: menu rows, section-page cards, the key, the post stamp
+// chip and the About receipt (the post footer's mark is already --ink).
+.menu-index__row-prov,
+.menu-card__prov-glyph,
+.prov-legend__glyph,
+.prov-chip__glyph,
+.rec-qty--mark {
+  color: var(--ink);
+  font-style: normal;
+}
+
+// Key to the provenance marks, below the menu lists
+.prov-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 4px 18px;
+  margin: 18px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.prov-legend__glyph {
+  font-style: normal;
+  font-size: 13px;
+}
+
+.menu-index__empty {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 6px 0;
+}
+
+// ---- Diner palette ----------------------------------------------------------
+// Applied via data-palette="diner" on <body> in home.html.
+// Sets --accent to catalog red; all the diner components read from it.
+
+[data-palette="diner"] {
+  --accent: #C0311A;
+  --checker-size: 16px;   // one square
+  --checker-band: 112px;  // width of each side band (a multiple of the square)
+  --checker-rule: #6E1408; // dark red rule on the band's inner edge
+}
+
+// Red-and-white diner checker bands down the left and right edges. Home page
+// only (the diner palette is only set there), and only when
+// `home_checker_bands: true` in _config.yml adds data-checker-bands to <body>.
+// They run the full height of the page and scroll with it. Hidden when the
+// window is too narrow to fit them beside the 820px content column without
+// overlapping it.
+body[data-palette="diner"][data-checker-bands] {
+  position: relative;  // anchors the bands to the full page height
+  min-height: 100vh;
+}
+
+body[data-palette="diner"][data-checker-bands]::before,
+body[data-palette="diner"][data-checker-bands]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--checker-band);
+  background-color: #FFFDF7;
+  background-image: conic-gradient(var(--accent) 25%, transparent 0 50%, var(--accent) 0 75%, transparent 0);
+  background-size: calc(var(--checker-size) * 2) calc(var(--checker-size) * 2);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body[data-palette="diner"][data-checker-bands]::before {
+  left: 0;
+  border-right: 3px solid var(--checker-rule);
+}
+
+body[data-palette="diner"][data-checker-bands]::after {
+  right: 0;
+  border-left: 3px solid var(--checker-rule);
+}
+
+// 820px column + two bands + a little breathing room
+@media (max-width: 1080px) {
+  body[data-palette="diner"][data-checker-bands]::before,
+  body[data-palette="diner"][data-checker-bands]::after { display: none; }
+}
+
+// ---- Page wrapper -----------------------------------------------------------
+
+// Home's <main> (the jar + specials panel) — undo the inner-page `main` column
+.home-main {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.home-wrap,
+.diner-wrap {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 24px 0;
+}
+
+// ---- Top nav strip ----------------------------------------------------------
+
+.home-topnav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0;
+  // Above everything after it (the checker banner, the jar label), so the
+  // toggle's tooltip is never drawn underneath them.
+  position: relative;
+  z-index: 5;
+}
+
+.home-topnav__group {
+  --nav-track: 0.18em;      // the letter-spacing, also used to end the links' hairline
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: var(--nav-track);
+  text-transform: uppercase;
+}
+
+// Inner pages: a small one-line wordmark in the center of the strip
+.home-topnav--wordmark {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  column-gap: 16px;
+
+  .home-topnav__group--left  { justify-self: start; }
+  .home-topnav__group--right { justify-self: end; }
+}
+
+// The jar title's type treatment at nav scale: no frame, border or shadow
+.topnav-wordmark {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink);
+  text-decoration: none;
+
+  em {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 0.68em;
+    padding: 0 0.1em;
+    color: var(--accent);
+    letter-spacing: 0;
+  }
+
+  // Hover: one unbroken hairline under the whole wordmark, like the nav
+  // links' (1px, --ink). Drawn (::after) rather than underlined:
+  // an underline skips the side padding of "with", which left a gap at each
+  // word break, and ran on under the last letter's tracking. The foot of the
+  // box is about 0.21em below the baseline, so this puts the line 6.75px
+  // below the letters at either size (19px, 26.5px on phones), the same as
+  // MENU's (measured at 4×). Keyboard focus is the site's red ring, as on
+  // the other links.
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0.02em;                    // stop at the last letter
+    bottom: calc(0.21em - 7.75px);
+    height: 1px;
+    background: transparent;
+  }
+  &:hover::after { background: var(--ink); }
+}
+
+// Phones: everything centered in rows: the EST./OPEN line (with the dark
+// mode toggle) on top, then the wordmark (inner pages), then the links.
+@media (max-width: 560px) {
+  .home-topnav {
+    flex-direction: column;
+    align-items: center;
+    row-gap: 8px;
+  }
+
+  // Two rows of spaced caps read top-heavy on a phone: the EST row goes
+  // smaller and into the small-print ink, and both rows track a little less.
+  .home-topnav__group { --nav-track: 0.14em; }
+  .home-topnav__group--left { font-size: 10.5px; }
+  .home-topnav__group--left .home-topnav__item { color: var(--ink-soft); }
+
+  .home-topnav--wordmark {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    row-gap: 8px;
+    padding-bottom: 8px;
+
+    .home-topnav__group--left  { order: -2; justify-self: center; }
+    .home-topnav__group--right { justify-self: center; }
+
+    // Stacked between two rows of small caps, the wordmark needs more size to
+    // stand apart: 1.4× its desktop 19px (caps a little over 2× the links').
+    // One line at 320 (about 240px of the column).
+    .topnav-wordmark {
+      order: -1;
+      font-size: 26.5px;
+      // Balance: 1px lower, so its capitals sit 17px from the EST line's and
+      // 17px from the links' (measured at 2×), with the strip's height unchanged.
+      margin: 1px 0 -1px;
+    }
+  }
+}
+
+// Optional checker trim under the strip on inner pages (inner_checker_trim in
+// _config.yml, or checker_trim on one page): 75% of the window's width,
+// centered, two rows of the home page's 16px squares, replacing the ornament
+// divider. The pattern is centered, and both ends fade out (a mask, so the
+// squares, white and edge rules all fade together into the page).
+.checker-trim {
+  height: calc(var(--checker-size) * 2);
+  background-color: #FFFDF7;
+  background-image: conic-gradient(var(--accent) 25%, transparent 0 50%, var(--accent) 0 75%, transparent 0);
+  background-size: calc(var(--checker-size) * 2) calc(var(--checker-size) * 2);
+  background-position: center top;
+  border-top: 3px solid var(--checker-rule);
+  border-bottom: 3px solid var(--checker-rule);
+  width: 75%;
+  margin: 2px auto 8px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent);
+}
+
+.home-topnav__item {
+  color: var(--ink);
+  text-decoration: none;
+
+}
+
+// The nav links (MENU · ABOUT · FOLLOW): on touchscreens
+// a hairline under each, in the small-print ink, a little below the letters;
+// with a mouse or trackpad no line at rest, and a darker one on hover. The
+// EST line is plain text and stays plain. The line is drawn (::after) rather
+// than an underline, so it stops at the last letter: an underline also runs
+// under the letter-spacing after it. Each link is at least 24px tall to tap
+// (WCAG 2.5.8), from padding offset by equal negative margins, so the type
+// and the strip don't move.
+a.home-topnav__item {
+  position: relative;
+  display: inline-block;
+  padding: 4px 2px;
+  margin: -4px -2px;
+  text-decoration: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    right: calc(2px + var(--nav-track, 0.18em));   // stop at the last letter
+    bottom: 2px;
+    height: 1px;
+    background: var(--ink-soft);
+  }
+  &:hover::after { background: var(--ink); }
+
+  @media (hover: hover) and (pointer: fine) {
+    &::after { background: transparent; }
+    &:hover::after { background: var(--ink); }
+  }
+}
+
+// A nav link's glyph (nav.yml `icon`: FOLLOW's rss), before the word, in
+// the link's ink, the size of the dark-mode toggle's icon. Decorative
+// (aria-hidden). The link's hairline starts at the word, not the glyph.
+.home-topnav__icon {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+a.home-topnav__item--icon::after { left: 18px; }
+
+.home-topnav__dot {
+  opacity: 0.5;
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+
+// ---- Ornate divider --------------------------------------------------------
+
+.hr-orn {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--ink-soft);
+  margin: 4px 0 8px;
+}
+
+// ---- Jar wordmark: margin override ------------------------------------------
+
+.home-wrap .jar-masthead {
+  margin-bottom: 20px;
+}
+
+// ---- "Today's specials" ornate panel -----------------------------------------
+
+.home-ornate {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1.5px solid var(--ink);
+  padding: 14px 18px 18px;
+  margin-bottom: 12px;
+}
+
+// The full menu's Kid's Menu box (kids-menu-panel.html), after the sections,
+// like the kids' box on a diner menu: the home panel's boxed look around a
+// section's header and rows.
+.kids-menu-panel {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1.5px solid var(--ink);
+  padding: 14px 18px 4px;
+  margin: 0 0 36px;
+}
+// The same box on the home page (kids-menu-panel.html, home=true): its own
+// card between the home panel and What's Cooking, a second, smaller menu
+// card in the panel's frame and paper (dark mode: with the panel), the same
+// gap above and below as What's Cooking has. Its header and the item count,
+// no rows.
+.kids-menu-panel--home {
+  padding: 14px 18px 12px;
+  margin: 0 0 12px;
+}
+.kids-menu-panel__count {
+  margin: 4px 0 0;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+// What's Cooking (whats-cooking.html): one teaser, low on the home page,
+// after the sections box, on the box's background (dark mode: with the box,
+// below). Quieter than the box above it: a dashed frame in the small-print
+// ink, its label like the box's.
+.whats-cooking {
+  margin: 0 0 12px;
+  padding: 14px 18px 16px;
+  border: 1.5px dashed var(--ink-soft);
+  background: rgba(255, 255, 255, 0.4);
+}
+.whats-cooking__title {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: normal;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+// The three optional parts, in this order, whichever are set. The coming
+// piece's title, in a menu row's title type (the home page's size):
+.whats-cooking__piece {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  overflow-wrap: break-word;
+}
+// A tease: a few plain words about it, not quoted.
+.whats-cooking__tease {
+  p { margin: 0 0 0.6em; }
+  > :last-child { margin-bottom: 0; }
+}
+// An excerpt is set as a quote, its line breaks kept (verse).
+.whats-cooking__excerpt {
+  margin: 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--ink-soft);
+  font-style: italic;
+
+  p { margin: 0 0 0.8em; }
+  > :last-child { margin-bottom: 0; }
+}
+.whats-cooking__piece + .whats-cooking__tease { margin-top: 4px; }
+.whats-cooking__piece + .whats-cooking__excerpt,
+.whats-cooking__tease + .whats-cooking__excerpt { margin-top: 12px; }
+// Local builds only: a teaser set more than 30 days ago.
+.whats-cooking__stale {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.home-ornate__hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-ornate__label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.home-ornate__view-all {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  background: #fff;
+  padding: 4px 12px;
+  text-decoration: none;
+
+  &:hover { background: var(--accent); color: #fff; }
+}
+
+.home-ornate__grid {
+  // Sections sit side by side in pairs. Each section spans 4 rows of this grid
+  // (its header + up to 3 posts) and shares them through `subgrid`, so the
+  // headers line up across the two columns, and so does each post row. One
+  // column on phones.
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 24px;
+
+  @media (max-width: 560px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.home-ornate__section {
+  grid-row: span 4;
+  display: grid;
+  grid-template-rows: subgrid;
+  align-content: start;
+  min-width: 0;
+  padding: 12px 0;
+
+  .home-cat-hdr { margin-top: 0; }
+
+  // No line above a section's heading (only Specials keeps one, under the
+  // panel's top bar); the red double rule under the gloss remains, as on the
+  // full menu. Transparent rather than removed, so the heading keeps the same
+  // room above it.
+  .home-cat-hdr__rule:first-child { border-top-color: transparent; }
+}
+
+// An odd section left over gets its own row, centered at the same width as
+// one column (two columns only; on phones everything is one column). The
+// home layout marks it "solo", counting only the narrow sections.
+@media (min-width: 561px) {
+  .home-ornate__section--solo {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc((100% - 24px) / 2);
+  }
+}
+
+// A wide section (`home_wide` in _data/categories.yml: Burgers) spans both
+// columns, and its posts fill both, reading across: newest top left, then top
+// right, three rows of two. Its columns are the grid's own (subgrid), so they
+// line up with the sections below. Phones show its first three only.
+.home-ornate__section--wide {
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+
+  .home-cat-hdr { grid-column: 1 / -1; }
+
+  @media (max-width: 560px) {
+    .menu-index__row:nth-of-type(n+4) { display: none; }
+  }
+
+  // An odd count leaves the last post in the left column with an empty cell
+  // beside it (rather than centering it on its own row).
+}
+
+// The home page's menu rows get more vertical room than the full menu's.
+.home-ornate .menu-index__row { padding: 10px 0; }
+
+// ---- Category section header inside the ornate panel ------------------------
+
+.home-cat-hdr {
+  text-align: center;
+  margin: 12px 0 6px;
+}
+
+.home-cat-hdr__rule {
+  border-top: 3px double var(--accent);   // like the diner footer strip's rules
+  margin: 3px 0;
+}
+
+// The rule above each heading is a single thin dark line (as before the red
+// rules); the one under the gloss stays red double.
+.home-cat-hdr__rule:first-child { border-top: 1px solid var(--ink); }
+
+.home-cat-hdr__title {
+  font-family: var(--font-display);
+  font-size: 20px;          // outranks the 17px item titles; matches the full menu's
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 2px 0;
+}
+
+// Category name links to its /menu/<slug>/ page
+.home-cat-hdr__link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+.home-cat-hdr__sub {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-mid);
+  margin: 1px 0 3px;
+}
+
+// ---- Full-width specials block (above the 2×2 grid) -------------------------
+
+.home-ornate__specials-block {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ink-soft);
+}
+
+// A lone special needs no dashed rule of its own: the block's solid rule
+// closes it. (Sections keep the dashed rule under every entry.)
+.home-ornate__specials-block a.menu-index__row:only-of-type { border-bottom: 0; }
+
+// ---- Red double-rule footer -------------------------------------------------
+
+// Three columns: "now serving" left, the catalog line centered, the stamp
+// right. The outer two are always equal, so the catalog line sits on the
+// strip's true center whatever the counter and the stamp say. Each item has
+// its own column, so on a post (no catalog line) and on phones (where it's
+// hidden) the stamp stays right.
+.home-diner-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 8px;
+  padding: 8px 0;
+  border-top: 3px double var(--accent);
+  border-bottom: 3px double var(--accent);
+  color: var(--accent);
+  margin-top: 12px;
+}
+
+// Shared bottom strip on every page (_includes/diner-footer.html)
+.diner-footer { padding: 24px 0 28px; }
+
+// The small print: the credit left, the copyright right, in one style, full
+// width under the red strip on every page, sharing its edges: one line on
+// desktop, two
+// short lines on phones. Each " · " part stays whole (.diner-colophon__part).
+.diner-colophon {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding-top: 10px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+
+.diner-colophon__part { white-space: nowrap; }
+
+.home-diner-footer__counter {
+  grid-column: 1;
+  justify-self: start;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.home-counter {
+  display: inline-flex;
+  gap: 1px;
+
+  &::before { content: none; }
+}
+
+// The 404 page's broken counter (assets/js/counter-glitch.js).
+// The number sits right-aligned in a fixed three-digit field, so the one
+// longer state (four digits, "1000") spills left, into the space after the
+// colon, and its right edge never moves: no state comes nearer the catalog
+// line ("No. 404") than the resting "ERR". A blank state is spaces, so the
+// line keeps its height. "Dim" states flicker the number alone.
+.home-counter--glitch {
+  display: inline-flex;
+  justify-content: flex-end;
+  width: 3ch;
+  white-space: pre;
+
+  &.is-dim { opacity: 0.35; }
+}
+// Where the catalog line shows, a long state is cut off at the end of the
+// counter's column rather than running over it (it would between 481px and
+// about 560px wide). Phones hide the catalog line, so it's shown whole there.
+@media (min-width: 481px) {
+  .home-diner-footer__counter--broken {
+    justify-self: stretch;
+    overflow: hidden;
+    overflow: clip;
+  }
+}
+
+.home-diner-footer__catalog {
+  grid-column: 2;
+  justify-self: center;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+
+  // Phones: the strip keeps to one line, "now serving" and the stamp.
+  @media (max-width: 480px) { display: none; }
+}
+
+.home-diner-footer__stamp {
+  grid-column: 3;
+  justify-self: end;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  border: 2px solid var(--accent);
+  padding: 2px 8px;
+  transform: rotate(-2deg);
+  display: inline-block;
+}
+
+
+// ---- Dark mode --------------------------------------------------------------
+// The page follows the visitor's OS setting (prefers-color-scheme) unless they
+// pick a mode with the toggle in the top strip (assets/js/theme.js), which
+// sets data-theme="dark" or "light" on <html>. Without JavaScript it simply
+// follows the OS. The tokens below replace the light ones; contrast on --bg is
+// noted for each text color.
+@mixin pwc-dark-tokens {
+  color-scheme: dark;
+  --ink:      #ECE2C8;   // cream text, 14.2:1
+  --ink-dek:  #D9CDB0;
+  --ink-mid:  #C4B593;   // deks and glosses, 9.1:1
+  --ink-soft: #B09F80;   // small print: 7.10:1 on the page, 6.48 on panels, 5.86 on the receipt
+  --bg:       #17140F;   // the griddle
+  --paper:    #211D16;   // panels
+}
+// The diner tokens live on [data-palette="diner"] (the body), so they're
+// switched there.
+@mixin pwc-dark-diner {
+  --accent:       #E8604A;   // text, rules, stamps and codes: 5.4:1
+  --checker-rule: #4A1308;
+}
+// Parts with colors of their own.
+@mixin pwc-dark-parts {
+  // White tints on the cream become a faint lift on the dark.
+  .dialogue--framed, figure.dlg-excerpt, .license-note, .home-ornate, .kids-menu-panel, .whats-cooking, .jar-frame { background: rgba(255, 255, 255, 0.035); }
+  .dlg-monogram { background: rgba(255, 255, 255, 0.06); }
+
+  // Checkers: dark tiles and a deeper red than the text red, so the big fills
+  // don't glare; the home page's side bands are dimmer still.
+  .checker-trim {
+    background-color: #2A241B;
+    background-image: conic-gradient(#B23620 25%, transparent 0 50%, #B23620 0 75%, transparent 0);
+  }
+  body[data-palette="diner"][data-checker-bands]::before,
+  body[data-palette="diner"][data-checker-bands]::after {
+    background-color: #221D16;
+    background-image: conic-gradient(#8A2A18 25%, transparent 0 50%, #8A2A18 0 75%, transparent 0);
+  }
+
+  // The jar label's outlines and the home panel's border in the small-print
+  // ink; the jar's offset shadow a darker brown, so it reads as depth rather
+  // than a bright rim.
+  .jar-frame {
+    border-color: var(--ink-soft);
+    box-shadow: inset 0 0 0 1px var(--ink-soft), 4px 4px 0 #3A3227;
+  }
+  .home-ornate, .kids-menu-panel { border-color: var(--ink-soft); }
+
+  .home-ornate__view-all { background: var(--paper); &:hover { color: var(--bg); } }
+  .menu-card__thumb { background-color: #3A3226; }
+  .license-note--placeholder { border-left-color: var(--accent); }
+  .license-note__warning { color: var(--accent); }
+
+  // The About receipt in dark mode: dark paper a step up from the page, with
+  // the dark-mode inks, so it doesn't read as a bright block. Cream text
+  // 11.8:1, glosses 7.5:1, small print 5.0:1, the focus
+  // ring 4.5:1. The light page's soft shadow means nothing on the dark one.
+  .receipt, .receipt-zigzag { background-color: #2B251C; }
+  .receipt-wrapper { filter: none; }
+  // The logo printed in the dark receipt's ink (the light one hides).
+  .rec-logo--light { display: none; }
+  .rec-logo--dark { display: block; }
+
+  // A printout stays paper too, dimmed the same way, with its own dark ink
+  // (12.1:1 on the paper, 10.9:1 on the bands). The holes show the dark page.
+  .post__body code.language-printout { --po-paper: #E6DFCC; --po-bar: #CDD8C2; --po-perf: #A39A86; }
+}
+:root[data-theme="dark"] { @include pwc-dark-tokens; @include pwc-dark-parts; }
+:root[data-theme="dark"] [data-palette="diner"] { @include pwc-dark-diner; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { @include pwc-dark-tokens; @include pwc-dark-parts; }
+  :root:not([data-theme="light"]) [data-palette="diner"] { @include pwc-dark-diner; }
+}
+
+// The toggle: a small moon (light mode) or sun (dark mode) just after
+// "OPEN 24/7" in the top strip's left group, quieter than the links: small-print ink, a touch smaller than
+// their 12px, set apart by space rather than a dot. Hidden until theme.js
+// runs, since it can't work without it. The tooltip (data-tip, on hover or
+// keyboard focus) is drawn in CSS rather than a title attribute, so screen
+// readers hear only the name, "Dark mode", and its on/off state.
+.theme-toggle-wrap {
+  display: inline-flex;
+  // 12px of ink between "24/7" and the icon (measured at 2×): the strip's 8px
+  // gap, the tracking after "7", the button's padding and the icon's own
+  // margin come to 14px, so pull back 2px.
+  margin-left: -2px;
+
+  &[hidden] { display: none; }
+}
+
+.theme-toggle {
+  position: relative;
+  display: inline-flex;
+  // A 24px target (WCAG 2.5.8) round the 11px icon: 6.5px of padding, pulled
+  // back by 4.5px of negative margin, so the icon sits exactly where it did
+  // with its old 2px padding.
+  margin: -4.5px;
+  padding: 6.5px;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  line-height: 0;
+  cursor: pointer;
+  // Optical centering: the strip centers the icon on the line box, which puts
+  // it 1px below the middle of the small caps' cap height. Lift it to sit
+  // level with the letters (measured at 2× against "OPEN 24/7").
+  transform: translateY(-1px);
+
+  svg { width: 11px; height: 11px; display: block; }
+  &:hover { color: var(--ink); }
+
+  &::after {
+    content: attr(data-tip);
+    position: absolute;
+    // 6px below the old, smaller box: the 2px gap is the tip's own transparent
+    // border, so the pointer can cross onto it without it closing (WCAG
+    // 1.4.13, as the post tools' tips above), and the frame is an inset shadow.
+    top: calc(100% - 0.5px);
+    // Centered under the icon, so it stays on screen at either edge: at the
+    // left of the strip on desktop, and at the end of the centered line on a
+    // 320px phone. (It's laid out even while invisible, so an off-screen
+    // tip would let the page scroll sideways.)
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 8px;
+    border-top: 2px solid transparent;
+    background-color: var(--bg);   // solid page color (light or dark): nothing shows through
+    background-clip: padding-box;
+    box-shadow: inset 0 0 0 1px var(--ink-soft);
+    color: var(--ink-soft);
+    font: italic 12px/1.4 var(--font-body);
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s;
+    z-index: 2;
+  }
+  &:hover::after,
+  &:focus-visible::after { opacity: 1; pointer-events: auto; transition-delay: 0.3s; }
+  &.tip-off::after { opacity: 0; pointer-events: none; transition: none; }
+}
+
+// (Two classes, to outrank `.theme-toggle svg { display: block }` above.)
+.theme-toggle .theme-toggle__sun { display: none; }
+.theme-toggle[aria-pressed="true"] {
+  .theme-toggle__moon { display: none; }
+  .theme-toggle__sun { display: block; }
+}
+
+// ---- Print -------------------------------------------------------------------
+// Printing a post gives a clean page: the code line, title, dek and body, then
+// the footer notes (dates, license, provenance), in black on white, always
+// the light version even when the page is in dark mode. The site's chrome
+// (top and bottom strips, checker trims) and the "where next" links don't
+// print. Outside links print their address; a PDF viewer prints a line with
+// its title and link instead.
+// ============================================================================
+// Type sizes: one rule per piece, so any one can be changed or removed on
+// its own. The muted ink's values are in the color tokens above (light and
+// dark).
+// ============================================================================
+
+// 1. A 13px floor for anything a reader needs to read.
+.post__kicker { font-size: 13px; letter-spacing: 0.14em; }
+.post-label, .post-label + .post-tools { font-size: 13px; }
+.post-label__fine-label { font-size: 12px; }
+.post__contents-line { font-size: 13px; }               // [content notes] and its notes
+.more-from__head { font-size: 13px; }
+.series-nav__dir { font-size: 13px; }
+.archive__crumb { font-size: 13px; }
+.menu-card__code, .menu-card__date, .menu-card__prov-label, .menu-card__read-on, .menu-card__tag { font-size: 13px; }
+.menu-index__cat-link, .menu-index__row-section, .menu-index__row-date { font-size: 13px; }
+.menu-index__row-code { font-size: 12px; }               // mono: as wide as the 13px serif
+.menu-index__row { grid-template-columns: 44px minmax(0, 1fr); }
+.prov-legend { font-size: 13px; }
+.home-menu-count { font-size: 13px; }
+.home-topnav__group--right { font-size: 13px; }
+.home-diner-footer__counter, .home-diner-footer__catalog, .diner-colophon { font-size: 13px; }
+figcaption, table, .post__infobox, .post__figure-credit, .artwork__details,
+.post__dialogue-label, .license-note__label, .license-note__warning, .script-block__meta,
+.pdf-embed__pages, .pdf-embed__download, .audio-player__download, aside.callout .callout__title,
+.feed-page__copy, .skip-link { font-size: 13px; }
+.rec-sub, .rec-header { font-size: 13px; }
+.rec-sub--note { font-size: 11px; }                     // the feed note: smaller on desktop…
+@media (max-width: 480px) { .rec-sub--note { font-size: 13px; } }   // …the floor on phones
+.rec-header { letter-spacing: 0.18em; }
+@media (max-width: 480px) {
+  .receipt .rec-row, .receipt .rec-line-item { font-size: 13px; letter-spacing: 0.01em; }
+  .receipt .rec-row--sub { font-size: 13px; }
+}
+
+// 2. The home glosses larger and tight to their section names.
+.home-cat-hdr__title { margin: 2px 0 0; }
+.home-cat-hdr__sub { font-size: 16px; line-height: 1.3; margin: 0 0 5px; text-wrap: balance; }
+.menu-index__cat-gloss { font-size: 16px; }
+
+// 3. Larger list sizes on desktop.
+@media (min-width: 721px) {
+  .menu-index__row-name, .menu-card__title, .more-from__title { font-size: 19px; }
+  .menu-index__row-code { line-height: calc(19px * 1.55); }
+  // The home page's two-column grid one size down, so fewer titles wrap.
+  .home-ornate .menu-index__row-name { font-size: 18px; }
+  .home-ornate .menu-index__row-code { line-height: calc(18px * 1.55); }
+  .menu-index__row-excerpt, .menu-card__body, .more-from__dek { font-size: 16px; }
+  .home-cat-hdr__title { font-size: 22px; }
+  .home-cat-hdr__sub { font-size: 17px; }
+}
+
+// 4. The post's form in its header line ("No. 04-B · Burgers · short story"):
+//    same type as the line (_layouts/post.html, .post__form).
+
+@media print {
+  @page { margin: 18mm 20mm; }
+
+  // Always light, whatever the screen mode (outranks the dark-mode selectors).
+  :root:root:root {
+    color-scheme: light;
+    --ink: #000;
+    --ink-dek: #222;
+    --ink-mid: #333;
+    --ink-soft: #555;
+    --bg: #fff;
+    --paper: #fff;
+  }
+  :root:root:root [data-palette="diner"] { --accent: #000; }
+  html, body { background: #fff; color: #000; }
+
+  // Chrome and navigation that mean nothing on paper, including the end of a
+  // post's "where next" links: the series links (.post-next), "More from"
+  // in all its forms and the back link, so the body and its end mark go
+  // straight to Kitchen Facts and "From the kitchen of".
+  .diner-wrap, .home-wrap > .home-topnav, .diner-footer, .checker-trim, .hr-orn,
+  .theme-toggle-wrap, .post-next, .more-from, .post-next__back, .post__serving, .post__dialogue-link,
+  .pdf-embed__frame, .pdf-embed__bar, .pdf-embed__meta, .audio-player__audio,
+  .lightbox, .lightbox__close { display: none !important; }
+
+  main, main:has(> article.post) {
+    max-width: none;
+    padding: 0;
+  }
+
+  body { font-size: 11pt; line-height: 1.5; }
+  .post__body { font-size: 11pt; }
+  .post__title { font-size: 22pt; }
+  .post__dek { font-size: 11pt; }
+  .post__kicker { font-size: 8pt; }
+
+  // Keep things whole across pages, and headings with what follows them.
+  figure, .post__figure, .verse__stanza, .dlg-turn, blockquote, pre, table, .callout, .license-note,
+  .post-label { break-inside: avoid; }
+  h1, h2, h3, h4, .post__title, .post__kicker { break-after: avoid; }
+  img { max-width: 100% !important; }
+
+  // The license link's hairline is its ::after; in print that holds the address.
+  .post-label a::after { position: static; height: auto; background: none !important; }
+
+  // Outside links print their address after them.
+  .post__body a[href^="http"]::after,
+  .post-label a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 8.5pt;
+    word-break: break-all;
+  }
+
+  // No dek or code line on paper: the byline sits directly under the title.
+  .post__dek, .post__kicker { display: none !important; }
+
+  // The byline takes the reading time's slot under the title; on anthology
+  // posts the collection line follows it, in the same style.
+  .post__byline, .post__collection {
+    display: block;
+    margin: 6pt 0 0;
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 9.5pt;
+    color: var(--ink-soft);
+  }
+  .post__collection { margin-top: 1pt; }
+  // The site's address closes the notes, in their small mono type, and stays
+  // on the label's page: never a page of its own.
+  .post__print-address {
+    display: block;
+    break-before: avoid;
+    margin: 8pt 0 0;
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    color: var(--ink-soft);
+  }
+  .post-tools { display: none !important; }
+
+  // Content notes and the gate.
+  // The "[content notes]" control doesn't print; any post with notes prints
+  // them as a plain line under the byline instead. A gated post prints that
+  // list, then the whole piece, unblurred: the gate is screen-only, so the
+  // card, the stand-ins and the quiet line don't print, whatever the reader
+  // chose.
+  .post__contents-line, .cw-layer, .post--gated .gated::after { display: none !important; }
+  .post__content-notes--print {
+    display: block;
+    margin: 3pt 0 0;
+    font-size: 9.5pt;
+  }
+  .post__content-notes--print .post__content-notes-label { font-size: 7.5pt; }
+
+  // A PDF viewer prints its title and full link instead of the viewer.
+  .pdf-embed { border: 0; padding: 0; }
+  .pdf-embed__print {
+    display: block;
+    margin: 0;
+    font-size: 10pt;
+    word-break: break-all;
+  }
+  .pdf-embed__print-label { font-weight: 600; }
+
+  // Printouts: no paper (backgrounds don't print), just the dotted type
+  // between the torn edges, and nothing left half-revealed.
+  code.language-printout { padding-left: 0; padding-right: 0; }
+  .printout__line { clip-path: none !important; animation: none !important; }
+
+  // Artwork: the lead image kept short enough to share the first page with
+  // the title, and the extra images as a row of small thumbnails.
+  .artwork { margin: 6pt 0 14pt; }
+  .artwork__img { max-height: 150mm; border-width: 1pt; }
+  .artwork__link[style] { width: min(100%, calc((150mm - 2pt) * var(--aw-w) / var(--aw-h) + 2pt), calc(var(--aw-w) * 1px + 2pt)); }
+  .artwork__caption { font-size: 9.5pt; }
+  .artwork__details { font-size: 8pt; }
+  .artwork__more { gap: 4mm; margin-top: 8pt; }
+  .artwork__thumb { width: 22mm; height: 22mm; border-width: 1pt; }
+}

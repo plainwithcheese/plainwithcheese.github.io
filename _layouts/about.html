@@ -1,0 +1,124 @@
+---
+layout: default
+---
+{%- comment -%}
+  The page: its title, "About", as the page's
+  h1 (the archive pages' title style, as on the Feed page); then the
+  passage from about.md, in the post body's type and column; then
+  the receipt, as garnish, its "GUEST CHECK" an h2 under the title.
+{%- endcomment %}
+<header class="archive__title-block about__title-block">
+  <h1 class="archive__title">{{ page.title }}</h1>
+</header>
+<div class="post__body about__intro">
+{{ content }}
+</div>
+
+<article class="receipt-page">
+
+  <div class="receipt-wrapper">
+    <div class="receipt-zigzag receipt-zigzag--top" aria-hidden="true"></div>
+    <div class="receipt">
+
+      {%- comment -%} The receipt's printed logo: the favicon's burger and plate in the receipt's own ink, one image per theme (main.scss shows the one for the current theme). Decorative (empty alt). {%- endcomment %}
+      <img class="rec-logo rec-logo--light" src="{{ '/assets/img/receipt-logo-ink-light.png' | relative_url }}" alt="" width="40" height="40"><img class="rec-logo rec-logo--dark" src="{{ '/assets/img/receipt-logo-ink-dark.png' | relative_url }}" alt="" width="40" height="40">
+      <div class="rec-header">&#9733;&nbsp;&nbsp;PLAINwithCHEESE&nbsp;&nbsp;&#9733;</div>
+      <h2 class="rec-big">GUEST CHECK</h2>
+      {%- comment -%} The line can only break after the "·", so "ONGOING SINCE MMXXVI" stays together on narrow screens. {%- endcomment %}
+      {%- comment -%} The order number: "00" plus the build year's last two digits, from the same clock as the footer's © year (the About page's catalog line uses it too, diner-footer.html). "ONGOING SINCE MMXXVI" stays the founding year. {%- endcomment %}
+      <div class="rec-header">ORDER NO.&nbsp;{{ "now" | date: "%y" | prepend: "00" }}&nbsp;&middot; <span class="rec-nowrap">ONGOING SINCE MMXXVI</span></div>
+
+      <div class="rec-hr"></div>
+
+      <div class="rec-row"><span>SERVING SIZE</span><span>ONE POST</span></div>
+      <div class="rec-row"><span>SERVINGS PER VISIT</span><span>VARIES</span></div>
+      {%- comment -%} The newest post's date: its revision date if it was revised, else its own (post-times.html, the feed's <updated> too), so it changes only when a post is added or revised. {%- endcomment -%}
+      {%- include post-times.html -%}
+      {%- if pt_newest != "" %}
+      <div class="rec-row"><span>LAST UPDATED</span><span>{{ pt_newest | date: "%b %-d, %Y" | upcase }}</span></div>
+      {%- endif %}
+      <div class="rec-row"><span>OPEN</span><span>ALWAYS</span></div>
+
+      <div class="rec-hr"></div>
+      <div class="rec-big rec-big--sm">&mdash;&nbsp;&nbsp;CONTENTS&nbsp;&nbsp;&mdash;</div>
+
+      {%- comment -%}
+        One line per section with posts, from _data/categories.yml. A section
+        with no posts yet is left off until its first post, as are hidden
+        sections (`hidden: true`). The subtotal and total are the sum of these
+        lines (rec_total), so the receipt always adds up.
+      {%- endcomment %}
+      {%- assign rec_total = 0 %}
+      {%- for sec in site.data.categories %}
+      {%- if sec.hidden %}{% continue %}{% endif %}
+      {%- assign sec_count = site.posts | where: "category", sec.slug | size %}
+      {%- if sec_count == 0 %}{% continue %}{% endif %}
+      {%- assign rec_total = rec_total | plus: sec_count %}
+      <div class="rec-line-item">
+        <span class="rec-qty">&#215;&nbsp;{% if sec_count < 10 %}0{% endif %}{{ sec_count }}</span>
+        <span class="rec-item-name">{{ sec.display | upcase }}{% if sec.gloss %}<span class="rec-sub">{{ sec.gloss }}</span>{% endif %}</span>
+      </div>
+      {%- endfor %}
+      <div class="rec-line-item">
+        <span class="rec-qty"></span>
+        {%- comment -%} The feed isn't a post: no quantity, and not in the total. While any post is gated, a second sub-line says the feed carries gated posts in full (_data/content_warning.yml, feed_note). {%- endcomment -%}
+        {%- assign rec_gated = site.posts | where: "content_warning", true | size %}
+        <span class="rec-item-name">RSS FEED<span class="rec-sub">/feed.xml &middot; <a class="rec-link" href="{{ '/feed/' | relative_url }}">Follow for updates</a></span>{% if rec_gated > 0 %}<span class="rec-sub rec-sub--note">{{ site.data.content_warning.feed_note }}</span>{% endif %}</span>
+      </div>
+
+      <div class="rec-hr"></div>
+
+      <div class="rec-row"><span>SUBTOTAL</span><span>{{ rec_total }}</span></div>
+      <div class="rec-row rec-row--sub"><span>TAX (vibes)</span><span>$0.00</span></div>
+
+      <div class="rec-spacer"></div>
+      <div class="rec-row rec-row--total"><span>TOTAL</span><span>{{ rec_total }} posts</span></div>
+
+      <div class="rec-hr"></div>
+      <div class="rec-big rec-big--sm">&mdash;&nbsp;&nbsp;ALLERGENS&nbsp;&nbsp;&mdash;</div>
+
+      <div class="rec-row rec-row--soft-value"><span class="rec-nowrap">CONTAINS</span><span class="rec-stack"><span>STORIES<span class="visually-hidden">,</span></span> <span>VERSE<span class="visually-hidden">,</span></span> <span>ART<span class="visually-hidden">,</span></span> <span>OPINIONS</span></span></div>
+      <div class="rec-row rec-row--soft-value"><span class="rec-nowrap">MAY CONTAIN</span><span class="rec-stack"><span>MONSTERS<span class="visually-hidden">,</span></span> <span>RAMBLING</span></span></div>
+      {%- comment -%} A value with several items is stacked, one per line and right-aligned (.rec-stack), here, above in CONTAINS and MAY CONTAIN, and under TYPESET IN; screen readers hear it as one list ("ADS, TRACKING, VEGGIES"), from commas only they get. {%- endcomment %}
+      <div class="rec-row rec-row--soft-value"><span class="rec-nowrap">DOES NOT CONTAIN</span><span class="rec-stack"><span>ADS<span class="visually-hidden">,</span></span> <span>TRACKING<span class="visually-hidden">,</span></span> <span>VEGGIES</span></span></div>
+      <div class="rec-row rec-row--soft-value"><span>DAIRY</span><span>EXTRA CHEESE</span></div>
+
+      {%- comment -%}
+        How things on the site are made: the provenance marks (same labels as
+        the key under the menus, _includes/provenance-legend.html), then the
+        policy line.
+      {%- endcomment %}
+      <div class="rec-hr"></div>
+      <div class="rec-big rec-big--sm">&mdash;&nbsp;&nbsp;PREP NOTES&nbsp;&nbsp;&mdash;</div>
+
+      <div class="rec-line-item"><span class="rec-qty rec-qty--mark">{% include prov-mark.html provenance="by_hand" %}</span><span class="rec-item-name">by hand</span></div>
+      <div class="rec-line-item"><span class="rec-qty rec-qty--mark">{% include prov-mark.html provenance="assisted" %}</span><span class="rec-item-name">with machine collaboration</span></div>
+      <div class="rec-line-item"><span class="rec-qty rec-qty--mark">{% include prov-mark.html provenance="by_machine" %}</span><span class="rec-item-name">by machine</span></div>
+      <div class="rec-row rec-row--sub"><span>SPECIFICS NOTED ON EACH POST</span></div>
+
+      <div class="rec-hr"></div>
+      <div class="rec-big rec-big--sm">&mdash;&nbsp;&nbsp;COLOPHON&nbsp;&nbsp;&mdash;</div>
+
+      <div class="rec-row rec-row--soft-value"><span>OVEN</span><span>JEKYLL 3.10</span></div>
+      <div class="rec-row rec-row--soft-value"><span>HOSTED AT</span><span>GITHUB PAGES</span></div>
+      <div class="rec-row rec-row--soft-value"><span class="rec-nowrap">TYPESET IN</span><span class="rec-stack"><span>IM FELL<span class="visually-hidden">,</span></span> <span>SOURCE SERIF<span class="visually-hidden">,</span></span> <span>PLEX MONO</span></span></div>
+      <div class="rec-row rec-row--soft-value"><span>ICONS</span><span>LUCIDE</span></div>
+      <div class="rec-row rec-row--soft-value"><span>TEMPLATE</span><span>DREAMED WITH CLAUDE</span></div>
+      <div class="rec-row rec-row--soft-value"><span>SOURCE</span><a class="rec-link" href="https://github.com/plainwithcheese">GITHUB.COM/<wbr>PLAINWITHCHEESE</a></div>
+      {%- comment -%} The site default license (_data/licenses.yml); posts that differ say so in their footer. {%- endcomment %}
+      <div class="rec-row rec-row--soft-value"><span>LICENSE</span><span>{{ site.data.licenses.default }}<sup class="rec-fn">*</sup></span></div>
+      <div class="rec-row rec-row--sub"><span><sup class="rec-fn">*</sup> UNLESS NOTED ON THE POST</span></div>
+
+      <div class="rec-hr"></div>
+
+      <div class="rec-header">CASHIER: PLAINWITHCHEESE</div>
+      <div class="rec-header">NO REFUNDS &middot; NO RETURNS</div>
+
+      <div class="rec-hr rec-hr--heavy"></div>
+      <div class="rec-header">&#9733; THANK YOU FOR READING &#9733;</div>
+
+    </div>
+    <div class="receipt-zigzag receipt-zigzag--bottom" aria-hidden="true"></div>
+  </div>
+
+</article>

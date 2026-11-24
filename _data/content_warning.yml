@@ -1,0 +1,48 @@
+# Content notes and the content-warning gate: the words.
+# The vocabulary for the notes themselves is in _data/content_notes.yml.
+#
+# A production build fails on a gated post if a line here starts with "[TBD"
+# or the message's status is "draft" (_layouts/post.html), so a placeholder
+# or draft can't reach the live site.
+
+# The control near the top of a post with `content_notes`, under the dek. A
+# bracketed control like "[print]": it opens and closes the notes in place.
+toggle: "[content notes]"
+toggle_label: "Content notes"      # what screen readers hear (the visible words, for voice control)
+notes_label: "contains:"           # starts the printed list ("contains: injury, brief vomiting"); on screen the list follows "[content notes]" with no label
+
+# The gate, on a post with `content_warning: true`: a centered card floating
+# over the blurred piece, under the title block. "[content notes]" above it
+# opens the list on its row, and the three choices in the card.
+# "[content notes]" in the message is set like the control it names.
+label: "Content warning"                   # what screen readers hear for the card
+# The card's message, one entry per line, in this order. "[content notes]" in
+# it is set like the control it names, and the Kid's Menu's title
+# (_data/kids_menu.yml) links to its page while it has pieces (plain text
+# otherwise, so it never points to an empty page).
+message:
+  - "Not on the Kid’s Menu."
+  - "Check the [content notes] above."
+message_status: approved
+# The three choices, stacked one per line in the card.
+serve_once: "Serve once"                   # nothing is stored; the only choice without JavaScript
+serve_post: "Always serve this post"       # remembers this post (the browser's local storage)
+serve_all: "Always serve all posts"        # remembers every post, site-wide
+
+# With an "always" choice in effect, the card never shows. Instead,
+# "[content notes]"'s reveal carries a status line under the notes, in the same
+# mono, then a bracketed control that turns the warnings back on (for this
+# post, or for all posts if they were turned off for all). Closing
+# "[content notes]" hides it with the notes.
+off_post: "Content warnings disabled for this post"
+off_all: "Content warnings disabled for all posts"
+turn_on: "Reset content warnings"          # shown in brackets, like [content notes]
+
+# The feed (feed.xml): a gated post's entry opens with this one plain line,
+# %notes% being its notes as listed ("Content warning: graphic injury, gore"),
+# then the full piece. Ungated entries carry no notes.
+feed_line: "Content warning: %notes%"
+
+# The About receipt's sub-line under RSS FEED, shown only while some post is
+# gated: feed readers get the whole piece, with no gate.
+feed_note: "Note: complete posts, no content gates"

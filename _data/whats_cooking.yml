@@ -1,0 +1,20 @@
+# What's Cooking: teasers for pieces on the way. The home page shows the
+# first one whose piece doesn't exist yet and that has something to show
+# (whats-cooking.html), unless it sets `home: false`. The words are the
+# owner's; a production build fails while a shown part is a "[" placeholder.
+# With no teasers (`teasers: []`) the block doesn't show.
+#
+#   slug    — required, never shown: the coming piece's slug; once a post
+#             has it, the teaser hides
+#   title   — optional: the coming piece's title
+#   tease   — optional: a few words about it, plain, not quoted (Markdown)
+#   excerpt — optional: words from the piece, set as a quote, line breaks
+#             kept; a blank line starts a new stanza (Markdown)
+#             Any mix of the three; they show in this order.
+#   set     — the day it was set; a local build notes one older than 30 days
+#   home    — optional; false keeps it off the home page
+#   after   — planned, for the serial "Next Time…" footer: the slug of the
+#             installment it follows, shown at that installment's end with
+#             the same three parts (not built yet)
+title: "What’s Cooking"
+teasers: []

@@ -1,0 +1,43 @@
+# Formats — the medium. A post's `format:` picks how its layout presents it.
+# Formats have no public archive pages; readers browse by section.
+#
+# Every post's `format:` is validated against `allowed` at build time
+# (see _includes/validate-format.html). Build FAILS on missing or unknown
+# values. Descriptions are internal notes for authors, not site copy.
+
+allowed:
+  - text
+  - verse
+  - audio
+  - script
+  - zine
+  - gallery
+  - artwork
+  - dialogue
+  - recipe
+
+# Formats that show the estimated reading time under the dek, in sections
+# with `reading_time: true` in _data/categories.yml (_includes/reading-time.html).
+reading_time:
+  - text
+
+# Formats that end with the end mark (the plainwithcheese glyph, centered
+# after the body): those where the body is the piece itself. Only in sections
+# with `end_mark: true` in _data/categories.yml (Burgers).
+end_mark:
+  - text
+  - verse
+  - dialogue
+
+descriptions:
+  text:     prose; the standard post layout
+  verse:    poems and lyrics; line breaks, blank lines and indents kept exactly
+  audio:    songs and recordings; self-hosted audio and/or embedded players
+  script:   screenplays as PDFs, with a script title block
+  zine:     zines as PDFs, with a cover image and optional print note
+  gallery:  a set of different works, in a grid with click-to-enlarge
+  artwork:  one painting, drawing or sketch as the piece; a large lead image with
+            click-to-enlarge, an optional details line (medium, dimensions,
+            year) and any more images of the same work
+  dialogue: conversations, using the dialogue includes
+  recipe:   build-your-own ideas, as a recipe card with a license

@@ -1,0 +1,79 @@
+{%- comment -%}
+  Wraps every line of verse in <span class="verse__line"> so each wrapped
+  line can hang-indent on narrow screens, and records each line's leading
+  indentation as --indent (CSS: 0.5em per unit). Runs on rendered HTML at
+  build time (no JS).
+
+  Indentation: a leading space (or tab) counts 1; a leading non-breaking
+  space (kramdown turns &nbsp; into the U+00A0 character; a stray &nbsp; or
+  &#160; entity counts too) counts ½, about its natural width, so a line
+  indented with &nbsp;s keeps its column and a wrapped line hangs under it.
+  The indentation is stripped from the text and applied as padding.
+
+  kramdown keeps a stanza's line breaks and leading spaces inside its <p>;
+  this splits on those newlines. A blank line between stanzas is a new <p>.
+
+  Params:
+    html  — rendered post content
+    scope — "all" (format: verse: every paragraph is verse) or "blocks"
+            (only paragraphs inside <div class="verse">, from verse.html)
+  Outputs the transformed HTML. Anything that isn't a verse paragraph
+  (headings, figures, other blocks) passes through untouched.
+{%- endcomment -%}
+{%- assign vl_lines = include.html | split: "
+" -%}
+{%- assign vl_in_scope = false -%}
+{%- if include.scope == "all" -%}{%- assign vl_in_scope = true -%}{%- endif -%}
+{%- assign vl_in_p = false -%}
+{%- for vl_raw in vl_lines -%}
+  {%- assign vl_t = vl_raw | strip -%}
+  {%- if include.scope != "all" -%}
+    {%- if vl_t contains '<div class="verse' -%}{%- assign vl_in_scope = true -%}{{ vl_raw }}
+{% continue -%}{%- endif -%}
+    {%- if vl_in_scope and vl_in_p == false and vl_t == "</div>" -%}{%- assign vl_in_scope = false -%}{{ vl_raw }}
+{% continue -%}{%- endif -%}
+  {%- endif -%}
+  {%- assign vl_open = false -%}
+  {%- if vl_in_scope and vl_in_p == false -%}
+    {%- assign vl_start = vl_t | slice: 0, 3 -%}
+    {%- if vl_start == "<p>" -%}{%- assign vl_open = true -%}{%- assign vl_in_p = true -%}{%- endif -%}
+  {%- endif -%}
+  {%- if vl_in_p == false -%}{{ vl_raw }}
+{% continue -%}{%- endif -%}
+  {%- comment -%} Inside a verse paragraph: one source line = one span. {%- endcomment -%}
+  {%- if vl_open -%}
+    {%- assign vl_text = vl_t | remove_first: "<p>" -%}
+  {%- else -%}
+    {%- assign vl_text = vl_raw | rstrip -%}
+  {%- endif -%}
+  {%- comment -%} Count and strip the leading indentation (see above). The quoted characters below are a tab and a non-breaking space. {%- endcomment -%}
+  {%- assign vl_sp = 0 -%}
+  {%- assign vl_nb = 0 -%}
+  {%- for vl_i in (1..200) -%}
+    {%- assign vl_c = vl_text | slice: 0, 1 -%}
+    {%- assign vl_c6 = vl_text | slice: 0, 6 -%}
+    {%- if vl_c == " " or vl_c == "	" -%}
+      {%- assign vl_sp = vl_sp | plus: 1 -%}{%- assign vl_text = vl_text | slice: 1, vl_text.size -%}
+    {%- elsif vl_c == " " -%}
+      {%- assign vl_nb = vl_nb | plus: 1 -%}{%- assign vl_text = vl_text | slice: 1, vl_text.size -%}
+    {%- elsif vl_c6 == "&nbsp;" or vl_c6 == "&#160;" -%}
+      {%- assign vl_nb = vl_nb | plus: 1 -%}{%- assign vl_text = vl_text | slice: 6, vl_text.size -%}
+    {%- else -%}
+      {%- break -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- assign vl_indent = vl_nb | divided_by: 2.0 | plus: vl_sp -%}
+  {%- assign vl_whole = vl_indent | floor -%}
+  {%- if vl_whole == vl_indent -%}{%- assign vl_indent = vl_whole -%}{%- endif -%}
+  {%- assign vl_end = vl_text | slice: -4, 4 -%}
+  {%- assign vl_close = false -%}
+  {%- if vl_end == "</p>" -%}
+    {%- assign vl_close = true -%}
+    {%- assign vl_cut = vl_text.size | minus: 4 -%}
+    {%- assign vl_text = vl_text | slice: 0, vl_cut -%}
+  {%- endif -%}
+  {%- if vl_open %}<p class="verse__stanza">{% endif -%}
+  <span class="verse__line"{% if vl_indent > 0 %} style="--indent: {{ vl_indent }}"{% endif %}>{{ vl_text }}</span>
+  {%- if vl_close -%}</p>
+{% assign vl_in_p = false -%}{%- endif -%}
+{%- endfor -%}

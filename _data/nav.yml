@@ -1,0 +1,31 @@
+# The top strip on every page (_includes/diner-topnav.html, used by
+# _layouts/home.html and _layouts/default.html): left and right groups.
+# Items with href render as <a>; items without href render as plain <span>.
+# `icon` names a glyph in _includes/glyphs/ (without .svg), drawn before the
+# label; it's decorative, so the link's name is the label alone.
+
+left:
+  - label: "EST. 2026"
+  - label: "OPEN 24/7"
+
+right:
+  - label: "MENU"
+    href: "/menu/"
+  - label: "ABOUT"
+    href: "/about/"
+  - label: "Follow"          # shown in caps, like the others (the strip's style); read as "Follow"
+    href: "/feed/"            # the feed page; feed readers find /feed.xml from every page's head
+    icon: lucide-rss
+
+# The skip link: the first thing on every page, shown only when it has
+# keyboard focus; it jumps past the top strip to the page's content.
+skip_link: "Skip to content"
+
+# Dark mode toggle: a small moon (light mode) or sun (dark mode) at the end
+# of the top strip (_includes/diner-topnav.html, assets/js/theme.js). The
+# tooltip on hover or focus says what a click does; screen readers hear
+# `label` with an on/off state.
+theme_toggle:
+  tip_to_dark: "Dark mode"      # tooltip in light mode (the moon)
+  tip_to_light: "Light mode"    # tooltip in dark mode (the sun)
+  label: "Dark mode"

@@ -1,0 +1,13 @@
+{%- comment -%}
+  Feed version of format-script.html (feed.xml): the title block's details
+  ("screenplay · short · 12 pages"), then a link to the PDF, labeled as in
+  print ("Served as a PDF:", `print.pdf_label` in _data/diner.yml).
+
+  Param: post
+{%- endcomment -%}
+{%- assign fs = include.post -%}
+<p>screenplay
+  {%- if fs.script_format %} &middot; {{ fs.script_format }}{% endif -%}
+  {%- if fs.pages %} &middot; {{ fs.pages }} {% if fs.pages == 1 %}page{% else %}pages{% endif %}{% endif -%}
+</p>
+{%- if fs.pdf %}{% include media-url.html src=fs.pdf %}<p>{{ site.data.diner.print.pdf_label }} <a href="{{ mu_abs }}">{{ fs.title }}</a></p>{% endif -%}

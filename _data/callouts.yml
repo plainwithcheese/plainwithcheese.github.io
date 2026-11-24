@@ -1,0 +1,60 @@
+# Callout presets — used by assets/js/callouts.js.
+#
+# In a post, start a blockquote with a [!kind] marker line:
+#
+#   > [!note]
+#   > Body text. Markdown works as usual.
+#
+# Each preset sets:
+#   title        — label shown at the top of the box
+#   glyph        — a single character shown at the left
+#   glyph_image  — (instead of glyph) path to an SVG, tinted to `color`
+#   color        — border, title and glyph color (any CSS color)
+#   bg           — background (optional; defaults to a light tint of `color`)
+#
+# Add a new kind by adding a block here — no code changes needed.
+#
+# The presets' icons are Lucide's (lucide-static 1.74.0), published in
+# assets/icons/lucide/ with their license, and tinted to `color` as a mask.
+
+note:
+  title: "Note"
+  glyph_image: "/assets/icons/lucide/info.svg"
+  color: "#5b6b8a"
+  bg:    "#f1ecdb"
+
+tip:
+  title: "Tip"
+  glyph_image: "/assets/icons/lucide/lightbulb.svg"
+  color: "#4a7a2a"
+  bg:    "#e8f0d8"
+
+warning:
+  title: "Warning"
+  glyph_image: "/assets/icons/lucide/circle-alert.svg"
+  color: "#8a6a1a"
+  bg:    "#fbf3d3"
+
+danger:
+  title: "Danger"
+  glyph_image: "/assets/icons/lucide/triangle-alert.svg"
+  color: "#8a2a1a"
+  bg:    "#f7dcd2"
+
+aside:
+  title: "Aside"
+  glyph_image: "/assets/icons/lucide/asterisk.svg"
+  color: "#75664E"
+  bg:    "#f3ead3"
+
+quote:
+  title: "From the kitchen"
+  glyph_image: "/assets/icons/lucide/quote.svg"
+  color: "#5a3a2a"
+  bg:    "#ece4d6"
+
+yak:
+  title: "Yak alert"
+  glyph_image: "/assets/icons/lucide/message-circle-more.svg"
+  color: "#9b6a3f"
+  bg:    "#f0e3d0"

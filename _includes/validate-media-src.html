@@ -1,0 +1,22 @@
+{%- comment -%}
+  Checks a media `src` against the rule in media-url.html. The build fails
+  (a named missing include) on:
+    - a full address anywhere but the media host: anything with "://" or a
+      leading "//" that doesn't start with site.media_url and a "/"
+    - a path on the media host when `media_url` isn't set in _config.yml
+  A "/" path's own check (that the file is in the repo) stays with each
+  include, which names its own error.
+  Param: src
+{%- endcomment -%}
+{%- assign vms_src = include.src | strip -%}
+{%- assign vms_first = vms_src | slice: 0, 1 -%}
+{%- assign vms_two = vms_src | slice: 0, 2 -%}
+{%- capture vms_host %}{{ site.media_url }}/{% endcapture -%}
+{%- if vms_two == "//" or vms_src contains "://" -%}
+  {%- assign vms_head = vms_src | slice: 0, vms_host.size -%}
+  {%- if site.media_url == nil or vms_head != vms_host -%}
+    {%- include errors/MEDIA_SRC_NOT_ON_THE_MEDIA_HOST-use-a-repo-path-starting-with-a-slash-or-a-path-on-media_url.html -%}
+  {%- endif -%}
+{%- elsif vms_first != "/" and site.media_url == nil -%}
+  {%- include errors/MEDIA_URL_NOT_SET-add-media_url-to-_config.yml.html -%}
+{%- endif -%}

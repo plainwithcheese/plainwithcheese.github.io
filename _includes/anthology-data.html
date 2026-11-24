@@ -1,0 +1,90 @@
+{%- comment -%}
+  For an anthology (see _data/anthologies.yml), sets:
+    anth        — its entry in _data/anthologies.yml
+    anth_page   — its page (anthologies/<slug>.md)
+    anth_url    — that page's URL
+    anth_pieces — its posts in contents order: pieces with `anthology_order`
+                  first, by number; then any without one, oldest first
+  Validates (build FAILS via the missing-include trick): the anthology is
+  listed in _data/anthologies.yml and has a page; a cover has `cover_alt`,
+  is on the media host or in the repo (a "/" path, which must exist), and
+  no two pieces share an `anthology_order`.
+  With `post`, also checks that post's own fields: `anthology` is one slug
+  (not a list), and `anthology_order` is a whole number of 1 or more, set
+  only alongside `anthology`.
+
+  Params: slug — the anthology's slug
+          post — optional; a post whose own fields to check (usually `page`)
+{%- endcomment -%}
+{%- assign anth_slug = include.slug -%}
+{%- assign anth_post = include.post -%}
+{%- if anth_post -%}
+  {%- if anth_post.anthology_order and anth_post.anthology == nil -%}
+    {%- include errors/ANTHOLOGY_anthology_order-is-set-but-anthology-is-missing.html -%}
+  {%- endif -%}
+  {%- assign anth_list_check = anth_post.anthology | first -%}
+  {%- if anth_list_check -%}
+    {%- include errors/ANTHOLOGY_one-per-post-anthology-must-be-a-single-slug.html -%}
+  {%- endif -%}
+  {%- if anth_post.anthology_order -%}
+    {%- assign ao_str = anth_post.anthology_order | append: "" -%}
+    {%- assign ao_num = anth_post.anthology_order | plus: 0 -%}
+    {%- assign ao_back = ao_num | append: "" -%}
+    {%- assign ao_whole = ao_num | floor -%}
+    {%- if ao_num < 1 or ao_back != ao_str or ao_whole != ao_num -%}
+      {%- include errors/ANTHOLOGY_anthology_order-must-be-a-whole-number-1-or-more.html -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endif -%}
+
+{%- assign anth = site.data.anthologies | where: "slug", anth_slug | first -%}
+{%- unless anth -%}
+  {%- include errors/ANTHOLOGY_NOT_FOUND-add-it-to-_data-anthologies.yml.html -%}
+{%- endunless -%}
+{%- assign anth_page = site.pages | where: "anthology", anth_slug | first -%}
+{%- unless anth_page -%}
+  {%- include errors/ANTHOLOGY_PAGE_MISSING-add-anthologies-{{ anth_slug }}.md-with-layout-anthology.html -%}
+{%- endunless -%}
+{%- assign anth_url = anth_page.url -%}
+{%- if anth.cover -%}
+  {%- unless anth.cover_alt -%}
+    {%- include errors/ANTHOLOGY_COVER_NEEDS_cover_alt-in-_data-anthologies.yml.html -%}
+  {%- endunless -%}
+  {%- include validate-media-src.html src=anth.cover -%}
+  {%- assign anth_cover_first = anth.cover | slice: 0, 1 -%}
+  {%- if anth_cover_first == "/" -%}
+    {%- assign anth_cover_file = site.static_files | where: "path", anth.cover | first -%}
+    {%- unless anth_cover_file -%}
+      {%- include errors/ANTHOLOGY_COVER_NOT_FOUND-check-the-cover-path-in-_data-anthologies.yml.html -%}
+    {%- endunless -%}
+  {%- endif -%}
+{%- endif -%}
+
+{%- comment -%}
+  Contents order without `sort` (as series-data.html does; sort crashes on
+  a non-number before the check above can report it): find the highest
+  order, then pick each number 1..max in turn. Orders that aren't whole
+  numbers are left out here and fail the check on their own post.
+{%- endcomment -%}
+{%- assign anth_all = site.posts | where: "anthology", anth_slug -%}
+{%- assign anth_max = 0 -%}
+{%- comment -%} `floor` keeps the range whole even if an order is, say, 1.5. {%- endcomment -%}
+{%- for ap in anth_all -%}{%- assign ap_n = ap.anthology_order | plus: 0 | floor -%}{%- if ap_n > anth_max -%}{%- assign anth_max = ap_n -%}{%- endif -%}{%- endfor -%}
+{%- assign anth_pieces = "" | split: "" -%}
+{%- if anth_max > 0 -%}
+  {%- for n in (1..anth_max) -%}
+    {%- assign ap_match = 0 -%}
+    {%- for ap in anth_all -%}
+      {%- if ap.anthology_order -%}
+        {%- assign ap_n = ap.anthology_order | plus: 0 -%}
+        {%- if ap_n == n -%}{%- assign anth_pieces = anth_pieces | push: ap -%}{%- assign ap_match = ap_match | plus: 1 -%}{%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- if ap_match > 1 -%}
+      {%- include errors/ANTHOLOGY_DUPLICATE_anthology_order-two-pieces-in-one-anthology-share-a-number.html -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+{%- comment -%} Then the unnumbered pieces, oldest first (site.posts is newest first). {%- endcomment -%}
+{%- assign anth_unordered = anth_all | where_exp: "ap", "ap.anthology_order == nil" | reverse -%}
+{%- assign anth_pieces = anth_pieces | concat: anth_unordered -%}

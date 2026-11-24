@@ -1,0 +1,53 @@
+{%- comment -%}
+  Reads and checks a post's `content_notes`. The notes are one
+  lowercase, comma-separated line ("strong language, injury, brief
+  vomiting"), or a YAML list of the same. Each note is a term from
+  _data/content_notes.yml, optionally led by one of its qualifiers
+  ("brief vomiting"). Sets:
+    cn_notes — the notes, each trimmed, with single spaces (empty if none)
+    cn_text  — the notes joined with ", ", as the page shows them
+
+  Validates (build FAILS via the missing-include trick): an empty note (a
+  stray comma), a first word that looks like a qualifier but isn't one
+  ("sudden death"), and a term that isn't on the list (case counts: terms
+  are lowercase).
+
+  Param: post
+{%- endcomment -%}
+{%- assign cn_notes = "" | split: "" -%}
+{%- assign cn_text = "" -%}
+{%- if include.post.content_notes -%}
+  {%- assign cn_terms = "" | split: "" -%}
+  {%- for cn_group in site.data.content_notes.terms -%}
+    {%- for cn_t in cn_group[1] -%}{%- assign cn_terms = cn_terms | push: cn_t -%}{%- endfor -%}
+  {%- endfor -%}
+  {%- assign cn_raw = include.post.content_notes -%}
+  {%- if cn_raw.first != nil -%}{%- assign cn_raw = cn_raw | join: "," -%}{%- endif -%}
+  {%- assign cn_items = cn_raw | append: "" | split: "," -%}
+  {%- comment -%} A trailing comma leaves nothing after it, which split drops; catch it too. {%- endcomment -%}
+  {%- assign cn_last = cn_raw | append: "" | strip | slice: -1, 1 -%}
+  {%- if cn_last == "," -%}
+    {%- include errors/CONTENT_NOTES_EMPTY_ENTRY-remove-the-stray-comma.html -%}
+  {%- endif -%}
+  {%- for cn_item in cn_items -%}
+    {%- assign cn_note = cn_item | split: " " | join: " " | strip -%}
+    {%- if cn_note == "" -%}
+      {%- include errors/CONTENT_NOTES_EMPTY_ENTRY-remove-the-stray-comma.html -%}
+    {%- endif -%}
+    {%- assign cn_term = cn_note -%}
+    {%- assign cn_first = cn_note | split: " " | first -%}
+    {%- if cn_note contains " " and site.data.content_notes.qualifiers[cn_first] -%}
+      {%- assign cn_term = cn_note | remove_first: cn_first | strip -%}
+    {%- endif -%}
+    {%- unless cn_terms contains cn_term -%}
+      {%- assign cn_rest = cn_note | remove_first: cn_first | strip -%}
+      {%- if cn_note contains " " and cn_terms contains cn_rest -%}
+        {%- include errors/CONTENT_NOTE_UNKNOWN_QUALIFIER-use-mentioned-brief-mild-or-graphic-before-the-term.html -%}
+      {%- else -%}
+        {%- include errors/CONTENT_NOTE_UNKNOWN_TERM-use-a-lowercase-term-from-_data-content_notes.yml.html -%}
+      {%- endif -%}
+    {%- endunless -%}
+    {%- assign cn_notes = cn_notes | push: cn_note -%}
+  {%- endfor -%}
+  {%- assign cn_text = cn_notes | join: ", " -%}
+{%- endif -%}

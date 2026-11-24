@@ -1,0 +1,163 @@
+{%- comment -%}
+  A production build must point at the live address. Jekyll's development
+  server swaps in its own address; a production build reads `url:` in
+  _config.yml, and GitHub Pages' build keeps it (jekyll-github-metadata only
+  fills `url` when it's unset).
+{%- endcomment -%}
+{%- if jekyll.environment == "production" and site.url != "https://plainwithcheese.com" -%}
+  {%- include errors/PRODUCTION_URL_IS_NOT_https-plainwithcheese.com-check-url-in-_config.yml.html -%}
+{%- endif -%}
+{%- comment -%} The same for the media host: a production build's `media_url` is a real https address. {%- endcomment -%}
+{%- assign dl_media_scheme = site.media_url | slice: 0, 8 -%}
+{%- if jekyll.environment == "production" and site.media_url and dl_media_scheme != "https://" -%}
+  {%- include errors/PRODUCTION_MEDIA_URL_IS_NOT_https-check-media_url-in-_config.yml.html -%}
+{%- endif -%}
+{%- comment -%} And `media_standin` (see media-url.html) is never set in a production build. {%- endcomment -%}
+{%- if jekyll.environment == "production" and site.media_standin -%}
+  {%- include errors/PRODUCTION_BUILD_HAS_media_standin-the-local-media-stand-in-is-for-previews-only.html -%}
+{%- endif -%}
+{%- comment -%}
+  A hand-set `image:` (the link-preview picture, plain or as `image: {path: …}`)
+  goes to jekyll-seo-tag, which doesn't know the media host: a short path
+  like images/<slug>/x.jpg would point at this site. It must be the full
+  address (https://media.plainwithcheese.com/images/…) or a repo file ("/…").
+{%- endcomment -%}
+{%- assign dl_image = page.image.path | default: page.image -%}
+{%- if dl_image -%}
+  {%- assign dl_image_first = dl_image | slice: 0, 1 -%}
+  {%- assign dl_image_scheme = dl_image | slice: 0, 8 -%}
+  {%- if dl_image_first != "/" and dl_image_scheme != "https://" -%}
+    {%- include errors/IMAGE_NEEDS_THE_FULL_ADDRESS-write-image-as-https-media.plainwithcheese.com-images-slug-file-or-a-repo-path-starting-with-a-slash.html -%}
+  {%- endif -%}
+{%- endif -%}
+<!doctype html>
+<html lang="{{ site.lang | default: 'en' }}">
+<head>
+  {%- comment -%} Dark mode: apply a stored pick before the page paints (see assets/js/theme.js). {%- endcomment %}
+  <script>try{var t=localStorage.getItem("pwc-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {%- comment -%}
+    The tab title. A post adds its
+    form word (post-form.html): "The Caver · a short story · plainwithcheese"
+    (P1). A section page adds its plain meaning, the second half of its gloss:
+    "Desserts: sketches & paintings · plainwithcheese" (S1). Other pages:
+    "Title · plainwithcheese". Escaped, since a gloss can hold "&".
+  {%- endcomment -%}
+  {%- assign tt = page.title -%}
+  {%- assign post_form = "" -%}
+  {%- assign tt_sec = nil -%}
+  {%- if page.collection == "posts" -%}
+    {%- include post-form.html post=page -%}
+    {%- if post_form != "" -%}{%- assign tt = tt | append: " · " | append: post_form_article | append: " " | append: post_form -%}{%- endif -%}
+  {%- elsif page.layout == "category" -%}
+    {%- assign tt_sec = site.data.categories | where: "slug", page.category | first -%}
+    {%- if tt_sec.gloss contains "; " -%}{%- assign tt_plain = tt_sec.gloss | split: "; " | last -%}{%- assign tt = tt | append: ": " | append: tt_plain -%}{%- endif -%}
+  {%- endif %}
+  <title>{% if page.title and page.title != site.title %}{{ tt | escape }} · {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+  <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" sizes="32x32">
+  <link rel="icon" href="{{ '/favicon.svg' | relative_url }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ '/apple-touch-icon.png' | relative_url }}">
+  {%- comment -%} Fetch the body and display fonts early so text doesn't reflow when they arrive. {%- endcomment %}
+  <link rel="preload" href="{{ '/assets/fonts/source-serif-4/source-serif-4-opsz-wght.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ '/assets/fonts/im-fell-dw-pica-sc/im-fell-dw-pica-sc-400.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
+  {%- comment -%} A page whose first screen leans on more faces names them in `preload_fonts:` (paths under /assets/fonts/), so they arrive before the first paint too (the full menu: its italic deks and mono codes). {%- endcomment %}
+  {%- for pf in page.preload_fonts %}
+  <link rel="preload" href="{{ '/assets/fonts/' | append: pf | relative_url }}" as="font" type="font/woff2" crossorigin>
+  {%- endfor %}
+  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+  {%- comment -%}
+    The page's own <title> is above; title=false stops jekyll-seo-tag adding a
+    second. Share cards: the
+    card's title stays the page title; on a post with a form word, the form
+    leads the card's text ("A short story. You aren't quite sure why he went,
+    but he did."), and a section page's text is its gloss instead of the
+    site's tagline. jekyll-seo-tag writes the text itself (the description
+    meta and og:description), so its output is captured and that one value
+    replaced; the search-result description follows the same text. The
+    JSON-LD keeps the plain description.
+  {%- endcomment -%}
+  {%- capture seo_tags %}{% seo title=false %}{% endcapture -%}
+  {%- assign seo_marker = '<meta name="description" content="' -%}
+  {%- if seo_tags contains seo_marker -%}
+    {%- assign seo_old = seo_tags | split: seo_marker | last | split: '"' | first -%}
+    {%- assign seo_new = "" -%}
+    {%- if page.collection == "posts" and post_form != "" -%}
+      {%- capture seo_new %}{{ post_form_article | capitalize }} {{ post_form | escape }}. {{ seo_old }}{% endcapture -%}
+    {%- elsif page.layout == "category" and tt_sec.gloss -%}
+      {%- assign seo_new = tt_sec.gloss | escape -%}
+    {%- endif -%}
+    {%- if seo_new != "" -%}
+      {%- assign seo_from = 'content="' | append: seo_old | append: '"' -%}
+      {%- assign seo_to = 'content="' | append: seo_new | append: '"' -%}
+      {%- assign seo_tags = seo_tags | replace: seo_from, seo_to -%}
+    {%- endif -%}
+  {%- endif -%}
+  {%- comment -%}
+    Link previews for artwork posts without their own `image:`: the lead
+    image at full size from wherever it lives (media-url.html), with its alt
+    text and size, as the large card ("summary_large_image"; jekyll-seo-tag
+    writes the small "summary" when `image:` isn't set). (jekyll-seo-tag
+    writes the image tags itself when `image:` is set.) Not on a gated post
+    (`content_warning: true`): the piece is behind the warning, so a link
+    preview shouldn't show it. An `image:` set by hand still shows.
+  {%- endcomment -%}
+  {%- assign card_art = false -%}
+  {%- if page.format == "artwork" and page.image == nil and page.images.first.src and page.content_warning != true -%}{%- assign card_art = true -%}{%- endif -%}
+  {%- if card_art -%}
+    {%- assign seo_tags = seo_tags | replace: '<meta name="twitter:card" content="summary" />', '<meta name="twitter:card" content="summary_large_image" />' -%}
+  {%- endif %}
+  {{ seo_tags }}
+  {%- if card_art %}
+  {%- include media-url.html src=page.images.first.src %}
+  <meta property="og:image" content="{{ mu_abs }}">
+  {%- if page.images.first.width and page.images.first.height %}
+  <meta property="og:image:width" content="{{ page.images.first.width }}">
+  <meta property="og:image:height" content="{{ page.images.first.height }}">
+  {%- endif %}
+  <meta property="og:image:alt" content="{{ page.images.first.alt | escape }}">
+  <meta name="twitter:image" content="{{ mu_abs }}">
+  <meta name="twitter:image:alt" content="{{ page.images.first.alt | escape }}">
+  {%- endif %}
+  {%- comment -%} `noindex: true` keeps a page out of search results (with `sitemap: false`, out of the sitemap too): the empty /series/ and /anthologies/ until they have content. {%- endcomment -%}
+  {%- if page.noindex %}
+  <meta name="robots" content="noindex">
+  {%- endif %}
+  {%- feed_meta -%}
+</head>
+<body data-palette="diner">
+  <a class="skip-link" href="#main">{{ site.data.nav.skip_link }}</a>
+  {%- comment -%}
+    The diner chrome shared with the home page: the top strip (with a small
+    center wordmark here) and the bottom strip. The palette gives inner
+    pages the home page's accent red.
+  {%- endcomment %}
+  {%- comment -%}
+    Checker trim: on for every inner page with `inner_checker_trim: true` in
+    _config.yml (the default). A page can opt out with `checker_trim: false`,
+    or opt in with `checker_trim: true` when the site-wide switch is off. It
+    replaces the ornament divider under the strip.
+  {%- endcomment -%}
+  {%- assign show_trim = false -%}
+  {%- if site.inner_checker_trim or page.checker_trim -%}{%- assign show_trim = true -%}{%- endif -%}
+  {%- if page.checker_trim == false -%}{%- assign show_trim = false -%}{%- endif %}
+  <div class="diner-wrap">
+    {% if show_trim %}{% include diner-topnav.html wordmark=true divider=false %}{% else %}{% include diner-topnav.html wordmark=true %}{% endif %}
+  </div>
+  {%- if show_trim %}
+  <div class="checker-trim" aria-hidden="true"></div>
+  {%- endif %}
+
+  <main id="main" tabindex="-1">
+    {{ content }}
+  </main>
+
+  {%- comment -%} Callout presets for assets/js/callouts.js (from _data/callouts.yml). {%- endcomment %}
+  <script type="application/json" id="callout-presets">{{ site.data.callouts | jsonify }}</script>
+  <script src="{{ '/assets/js/callouts.js' | relative_url }}"></script>
+
+  <div class="diner-wrap">
+    {% include diner-footer.html %}
+  </div>
+</body>
+</html>

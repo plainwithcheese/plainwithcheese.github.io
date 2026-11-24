@@ -1,0 +1,17 @@
+{%- comment -%}
+  Should a list of posts show their dates? Sets `list_dates` to true/false.
+
+  Site-wide default: `show_dates_in_lists` in _config.yml (false if unset).
+  A section can override it with `show_dates: true|false` in
+  _data/categories.yml.
+
+  Param: section — the section slug for this list (omit for lists that
+         aren't one section's; they use the site-wide default)
+{%- endcomment -%}
+{%- assign list_dates = false -%}
+{%- if site.show_dates_in_lists == true -%}{%- assign list_dates = true -%}{%- endif -%}
+{%- if include.section -%}
+  {%- assign ld_sec = site.data.categories | where: "slug", include.section | first -%}
+  {%- if ld_sec.show_dates == true -%}{%- assign list_dates = true -%}
+  {%- elsif ld_sec.show_dates == false -%}{%- assign list_dates = false -%}{%- endif -%}
+{%- endif -%}

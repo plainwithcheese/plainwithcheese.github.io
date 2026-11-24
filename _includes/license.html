@@ -1,0 +1,32 @@
+{%- comment -%}
+  The build-your-own license notice, from _data/license.yml. Rendered on
+  every recipe post and on any section page with `license_notice: true`.
+  Its `name` must match the license that applies to the page (see
+  license-data.html), so the notice can't contradict the post's license.
+
+  While the license is still the placeholder ("[LICENSE:" in `name`):
+    - production builds (GitHub Pages) FAIL, via the missing-include trick;
+    - local builds show the placeholder with a visible warning.
+{%- endcomment -%}
+{%- assign lic = site.data.license -%}
+{%- assign lic_placeholder = false -%}
+{%- if lic == nil or lic.name == nil or lic.text == nil -%}{%- assign lic_placeholder = true -%}{%- endif -%}
+{%- if lic.name contains "[LICENSE:" -%}{%- assign lic_placeholder = true -%}{%- endif -%}
+{%- if lic_placeholder and jekyll.environment == "production" -%}
+  {%- include errors/SET-THE-BUILD-YOUR-OWN-LICENSE-in-_data-license.yml.html -%}
+{%- endif -%}
+{%- if page.collection == "posts" -%}
+  {%- include license-data.html post=page -%}
+{%- else -%}
+  {%- include license-data.html section=page.category -%}
+{%- endif -%}
+{%- if lic_placeholder == false and lic.name != page_license -%}
+  {%- include errors/LICENSE_NOTICE_MISMATCH-_data-license.yml-name-must-match-this-page-license.html -%}
+{%- endif -%}
+<aside class="license-note{% if lic_placeholder %} license-note--placeholder{% endif %}" role="note">
+  <p class="license-note__label">License{% if lic.name %} &middot; {% if lic.url and lic.url != "" %}<a href="{{ lic.url }}">{{ lic.name }}</a>{% else %}{{ lic.name }}{% endif %}{% endif %}</p>
+  <div class="license-note__text">{{ lic.text | markdownify }}</div>
+  {%- if lic_placeholder %}
+  <p class="license-note__warning">Placeholder license: set it in <code>_data/license.yml</code>. Production builds fail until you do.</p>
+  {%- endif %}
+</aside>

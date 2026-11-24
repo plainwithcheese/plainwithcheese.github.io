@@ -1,0 +1,26 @@
+{%- comment -%}
+  Sets `item_code` for a post, e.g. "21-D": the post's number within its
+  section, in date order (oldest = 1), zero-padded to at least two digits,
+  then its section's code letter (section-code.html). Each section counts
+  its own posts, so a new
+  post never moves another section's codes. Posts on the same day are
+  ordered by filename (Jekyll's tie-break). The one place codes are computed, so the home
+  page, the full menu, section pages and the post itself always agree.
+
+  Padding: numbers under 10 get a leading zero ("07"); 10 and up are left
+  whole ("21", "101"), never truncated.
+
+  Param: post — the post (a post object, or `page` on a post)
+{%- endcomment -%}
+{%- assign ic_num = 0 -%}
+{%- assign ic_all = site.posts | where: "category", include.post.category | reverse -%}
+{%- for ic_p in ic_all -%}
+  {%- if ic_p.url == include.post.url -%}{%- assign ic_num = forloop.index -%}{%- break -%}{%- endif -%}
+{%- endfor -%}
+{%- if ic_num < 10 -%}
+  {%- assign ic_padded = "0" | append: ic_num -%}
+{%- else -%}
+  {%- assign ic_padded = ic_num | append: "" -%}
+{%- endif -%}
+{%- include section-code.html slug=include.post.category -%}
+{%- assign item_code = ic_padded | append: "-" | append: sec_code -%}

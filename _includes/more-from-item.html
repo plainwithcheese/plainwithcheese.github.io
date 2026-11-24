@@ -1,0 +1,10 @@
+{%- comment -%}
+  One piece in a post's "More from" block (post.html): its title, then its
+  dek, or an artwork's work line when it has no dek.
+  Param: post
+{%- endcomment -%}
+{%- assign mfi = include.post -%}
+<a class="more-from__item" href="{{ mfi.url | relative_url }}"><span class="more-from__title">{{ mfi.title }}</span>
+{%- if mfi.dek %}<span class="more-from__dek">{{ mfi.dek }}</span>
+{%- elsif mfi.format == "artwork" %}{% capture mfi_work %}{% include artwork-details.html post=mfi %}{% endcapture %}{% if mfi_work != "" %}<span class="more-from__dek">{{ mfi_work }}</span>{% endif %}
+{%- endif %}</a>

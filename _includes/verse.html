@@ -1,0 +1,15 @@
+{%- comment -%}
+  Opens a verse block inside any post (e.g. lyrics on an audio post). Close
+  it with end_verse.html. Line breaks, blank lines (stanzas) and leading
+  spaces are kept exactly:
+
+    {% include verse.html %}
+    The grill was cold that morning,
+      the cheese still in its paper.
+    {% include end_verse.html %}
+
+  Param: align — optional "left" to left-set the block (default: centered)
+  Posts with `format: verse` don't need this; their whole body is verse.
+  The lines themselves are wrapped by verse-lines.html, from post.html.
+{%- endcomment -%}
+<div class="verse{% unless include.align == 'left' %} verse--center{% endunless %}" markdown="1">

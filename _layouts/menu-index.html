@@ -1,0 +1,44 @@
+---
+layout: default
+---
+<article class="archive menu-index">
+
+  <header class="archive__title-block">
+    <h1 class="archive__title">Full Menu</h1>
+    <p class="archive__gloss">Everything on offer, arranged by course</p>
+  </header>
+
+  {%- for cat in site.data.categories -%}
+  {%- comment -%} site.posts is already newest first, same-day posts in code order (no re-sort). {%- endcomment -%}
+  {%- assign cat_posts = site.posts | where: "category", cat.slug -%}
+  {%- comment -%} Hidden sections and sections with no posts yet are left off the full menu. {%- endcomment -%}
+  {%- if cat.hidden or cat_posts.size == 0 -%}{%- continue -%}{%- endif -%}
+  {%- include list-dates.html section=cat.slug -%}
+
+  <section class="menu-index__section">
+    <div class="menu-index__cat-hdr">
+      <h2 class="menu-index__cat-title"><a href="{{ '/menu/' | append: cat.slug | append: '/' | relative_url }}" class="menu-index__cat-title-link">{{ cat.display }}</a></h2>
+      {%- if cat.gloss -%}
+      <p class="menu-index__cat-gloss">{{ cat.gloss }}</p>
+      {%- endif -%}
+      <a href="{{ '/menu/' | append: cat.slug | append: '/' | relative_url }}" class="menu-index__cat-link">browse all &rarr;</a>
+    </div>
+
+    {%- if cat_posts.size > 0 -%}
+    <div class="menu-index__rows">
+      {%- for post in cat_posts -%}
+
+
+      {%- include item-code.html post=post -%}
+      {% unless list_dates %}{% include menu-row.html post=post code=item_code hide_date=true %}{% else %}{% include menu-row.html post=post code=item_code %}{% endunless %}
+
+      {%- endfor -%}
+    </div>
+    {%- endif -%}
+  </section>
+  {%- endfor -%}
+  {%- include kids-menu-panel.html -%}
+
+  {% include provenance-legend.html %}
+
+</article>

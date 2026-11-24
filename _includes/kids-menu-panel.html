@@ -1,0 +1,39 @@
+{%- comment -%}
+  The full menu's Kid's Menu box (menu-index.html), after the sections, like
+  the kids' box on a diner menu: its title (linking to its page), its gloss,
+  then each piece in menu-row style with its own code and section. Nothing
+  shows until a post is on the Kid's Menu (kids-menu-data.html).
+  Param: home — true for the home page's form (home.html): the same box,
+         compact, as its own card between the home panel and What's
+         Cooking: its title, gloss and "browse all", then the item count,
+         no rows.
+{%- endcomment -%}
+{%- include kids-menu-data.html -%}
+{%- if kids_pieces.size > 0 and include.home %}
+      <section class="kids-menu-panel kids-menu-panel--home" aria-labelledby="kids-menu-home-title">
+        <div class="menu-index__cat-hdr">
+          <h2 class="menu-index__cat-title" id="kids-menu-home-title"><a href="{{ kids.url | relative_url }}" class="menu-index__cat-title-link">{{ kids.title }}</a></h2>
+          {%- if kids.gloss %}
+          <p class="menu-index__cat-gloss">{{ kids.gloss }}</p>
+          {%- endif %}
+          <a href="{{ kids.url | relative_url }}" class="menu-index__cat-link">browse all &rarr;</a>
+        </div>
+        <p class="kids-menu-panel__count">{{ kids_pieces.size }} {% if kids_pieces.size == 1 %}item{% else %}items{% endif %}</p>
+      </section>
+{%- elsif kids_pieces.size > 0 %}
+  <section class="kids-menu-panel" aria-labelledby="kids-menu-panel-title">
+    <div class="menu-index__cat-hdr">
+      <h2 class="menu-index__cat-title" id="kids-menu-panel-title"><a href="{{ kids.url | relative_url }}" class="menu-index__cat-title-link">{{ kids.title }}</a></h2>
+      {%- if kids.gloss %}
+      <p class="menu-index__cat-gloss">{{ kids.gloss }}</p>
+      {%- endif %}
+      <a href="{{ kids.url | relative_url }}" class="menu-index__cat-link">browse all &rarr;</a>
+    </div>
+    <div class="menu-index__rows">
+      {%- for post in kids_pieces -%}
+      {%- include item-code.html post=post -%}
+      {% include menu-row.html post=post code=item_code hide_date=true section=true %}
+      {%- endfor -%}
+    </div>
+  </section>
+{%- endif -%}

@@ -1,0 +1,23 @@
+{%- comment -%}
+  Works out the license for a post or a section page (_data/licenses.yml):
+    page_license         — its name, e.g. "CC BY 4.0"
+    page_license_url     — its official page, or "" (e.g. "All rights reserved")
+    page_license_default — true when it's the site default
+  A post's own `license:` wins, then its section's `license:` in
+  _data/categories.yml, then the site default.
+  Validates (build FAILS via the missing-include trick): the license must be
+  one listed in _data/licenses.yml.
+
+  Params: post    — a post (usually `page`)
+          section — a section slug, for a section page (instead of `post`)
+{%- endcomment -%}
+{%- assign pl_section_slug = include.section | default: include.post.category -%}
+{%- assign pl_section = site.data.categories | where: "slug", pl_section_slug | first -%}
+{%- assign page_license = include.post.license | default: pl_section.license | default: site.data.licenses.default -%}
+{%- assign pl_entry = site.data.licenses.list | where: "name", page_license | first -%}
+{%- unless pl_entry -%}
+  {%- include errors/LICENSE_NOT_FOUND-use-a-name-listed-in-_data-licenses.yml.html -%}
+{%- endunless -%}
+{%- assign page_license_url = pl_entry.url | default: "" -%}
+{%- assign page_license_default = false -%}
+{%- if page_license == site.data.licenses.default -%}{%- assign page_license_default = true -%}{%- endif -%}

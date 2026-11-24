@@ -1,0 +1,34 @@
+---
+layout: default
+---
+{%- comment -%}
+  /anthologies/ (anthologies/index.md): every anthology with at least one
+  piece, in the order of _data/anthologies.yml, each with its cover (if
+  set), title, count and description. Nothing links here until there are
+  two or more; an anthology's page links straight from its posts.
+{%- endcomment -%}
+{%- include anthology-list.html -%}
+
+<article class="archive anthology-index">
+  <div class="archive__crumb"><a href="{{ '/menu/' | relative_url }}" class="archive__crumb-link">Menu</a> &middot; {{ page.title }}</div>
+  <header class="archive__title-block">
+    <h1 class="archive__title">{{ page.title }}</h1>
+  </header>
+
+  {%- for al in anth_list %}
+  {%- include anthology-data.html slug=al.slug %}
+  <section class="anthology-index__item">
+    {%- if anth.cover %}
+    {%- include media-url.html src=anth.cover %}
+    <a href="{{ anth_url | relative_url }}" class="anthology-index__cover-link" tabindex="-1" aria-hidden="true"><img class="anthology-index__cover" src="{{ mu_src }}" alt="" loading="lazy"></a>
+    {%- endif %}
+    <div class="anthology-index__body">
+      <h2 class="anthology-index__name"><a class="bracket-link" href="{{ anth_url | relative_url }}">{% include bracket-text.html text=anth.title %}</a></h2>
+      <p class="archive__count">{{ anth_pieces | size }} {% if anth_pieces.size == 1 %}item{% else %}items{% endif %}</p>
+      {%- if anth.description %}
+      <div class="anthology-index__description">{{ anth.description | markdownify }}</div>
+      {%- endif %}
+    </div>
+  </section>
+  {%- endfor %}
+</article>

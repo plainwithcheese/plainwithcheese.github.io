@@ -1,0 +1,78 @@
+{%- comment -%}
+  What's Cooking: a teaser for a piece on the way, low on the home page
+  (home.html, after the sections box). One at a time, and only when one is
+  set: the first teaser in _data/whats_cooking.yml whose piece doesn't exist
+  yet (no post has its `slug`) and that has something to show, unless it
+  sets `home: false`. No date is shown.
+  A teaser's `slug` is required and never shown. Its three parts are each
+  optional, so the block's shape follows the piece; it shows whichever are
+  set, in this order:
+    title   — the coming piece's title, in a menu row's title type
+    tease   — a few words about it, plain, not quoted (Markdown)
+    excerpt — words from the piece, set as a quote; line breaks are kept
+              (verse), and a blank line starts a new stanza or paragraph
+  Params: teaser — optional, a teaser to show instead of picking one
+          id     — optional, the heading's id (default whats-cooking-title),
+                   for a page that shows more than one
+  Validates (build FAILS via the missing-include trick): every teaser has a
+  `slug` and no longer uses `mode` or `text`; in production, a shown part
+  isn't still a "[" placeholder. A local build shows a note on a teaser set
+  more than 30 days ago (`set:`), so a stale one gets noticed.
+{%- endcomment -%}
+{%- assign wc = site.data.whats_cooking -%}
+{%- for wc_c in wc.teasers -%}
+  {%- unless wc_c.slug -%}{%- include errors/WHATS_COOKING_TEASER_NEEDS_A_slug-in-_data-whats_cooking.yml.html -%}{%- endunless -%}
+  {%- if wc_c.mode or wc_c.text -%}{%- include errors/WHATS_COOKING_mode-AND-text-ARE-GONE-use-title-tease-excerpt-in-_data-whats_cooking.yml.html -%}{%- endif -%}
+{%- endfor -%}
+{%- assign wc_t = include.teaser -%}
+{%- unless wc_t -%}
+  {%- for wc_c in wc.teasers -%}
+    {%- if wc_c.home == false %}{% continue %}{% endif -%}
+    {%- assign wc_any = wc_c.title | append: wc_c.tease | append: wc_c.excerpt | strip -%}
+    {%- if wc_any == "" %}{% continue %}{% endif -%}
+    {%- assign wc_has = site.posts | where: "slug", wc_c.slug | first -%}
+    {%- unless wc_has %}{% assign wc_t = wc_c %}{% break %}{% endunless -%}
+  {%- endfor -%}
+{%- endunless -%}
+{%- assign wc_title = wc_t.title | strip -%}
+{%- assign wc_tease = wc_t.tease | strip -%}
+{%- assign wc_excerpt = wc_t.excerpt | strip -%}
+{%- assign wc_any = wc_title | append: wc_tease | append: wc_excerpt -%}
+{%- if wc_t and wc_any != "" -%}
+  {%- if jekyll.environment == "production" -%}
+    {%- assign wc_f1 = wc_title | slice: 0, 1 -%}
+    {%- assign wc_f2 = wc_tease | slice: 0, 1 -%}
+    {%- assign wc_f3 = wc_excerpt | slice: 0, 1 -%}
+    {%- if wc_f1 == "[" or wc_f2 == "[" or wc_f3 == "[" -%}
+      {%- include errors/WHATS_COOKING_TEXT_IS_A_PLACEHOLDER-write-it-in-_data-whats_cooking.yml.html -%}
+    {%- endif -%}
+  {%- endif -%}
+  {%- assign wc_age = 0 -%}
+  {%- if wc_t.set -%}
+    {%- assign wc_set_s = wc_t.set | date: "%s" | plus: 0 -%}
+    {%- assign wc_age = site.time | date: "%s" | plus: 0 | minus: wc_set_s | divided_by: 86400 -%}
+  {%- endif %}
+  {%- assign wc_id = include.id | default: "whats-cooking-title" %}
+  <section class="whats-cooking" aria-labelledby="{{ wc_id }}">
+    <h2 class="whats-cooking__title" id="{{ wc_id }}">{{ wc.title | default: "What’s Cooking" }}</h2>
+    {%- if wc_title != "" %}
+    <p class="whats-cooking__piece">{{ wc_title }}</p>
+    {%- endif %}
+    {%- if wc_tease != "" %}
+    <div class="whats-cooking__tease">{{ wc_tease | markdownify }}</div>
+    {%- endif %}
+    {%- if wc_excerpt != "" %}
+    <blockquote class="whats-cooking__excerpt">
+      {%- assign wc_stanzas = wc_excerpt | split: "
+
+" -%}
+      {%- for wc_s in wc_stanzas %}
+      {{ wc_s | strip | newline_to_br | markdownify }}
+      {%- endfor %}
+    </blockquote>
+    {%- endif %}
+    {%- if jekyll.environment != "production" and wc_age > 30 %}
+    <p class="whats-cooking__stale">Local build only: this teaser was set {{ wc_age }} days ago.</p>
+    {%- endif %}
+  </section>
+{%- endif -%}

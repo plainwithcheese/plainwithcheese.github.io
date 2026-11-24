@@ -1,0 +1,13 @@
+# The Kid's Menu: a shared collection of pieces, not a section
+# (kids-menu-data.html). A post joins it by hand with `kids_menu: true`, and
+# keeps its own section and code. The gloss and the description are the
+# owner's words; a production build fails if either is a "[" placeholder
+# while any post is on it.
+title: "Kid’s Menu"
+url: /kids-menu/
+from_label: "From the"   # the line at the top of each piece: "From the Kid’s Menu", the name linked (like "From the anthology: …")
+gloss: "Dishes for younger diners; ages 8 & up"
+# The page's description (/kids-menu/). The control's label in it ("[content
+# notes]", _data/content_warning.yml `toggle`) is set like the control.
+description: |
+  Picked for younger readers from every part of the menu. A few have a spooky streak; the [content notes] on a piece tell you what’s inside.

@@ -1,0 +1,58 @@
+{%- comment -%}
+  For a post in a series, sets:
+    ser_posts  — all posts in the series, sorted by `part`
+    ser_total  — how many parts
+    ser_prev / ser_next — neighboring parts (nil at the ends)
+    ser_anchor — the series' anchor on /series/ (slugified name)
+  Validates (build FAILS via missing-include trick): `series` and `part`
+  must be set together; `part` must be a whole number of 1 or more; no two
+  posts in a series may share a part number.
+
+  Param: post — the post (usually `page`)
+{%- endcomment -%}
+{%- assign ser_post = include.post -%}
+{%- assign ser_i = 0 -%}
+{%- if ser_post.series and ser_post.part == nil -%}
+  {%- include errors/SERIES_NEEDS_part-a-number-when-series-is-set.html -%}
+{%- endif -%}
+{%- if ser_post.part and ser_post.series == nil -%}
+  {%- include errors/SERIES_part-is-set-but-series-is-missing.html -%}
+{%- endif -%}
+{%- assign ser_part_str = ser_post.part | append: "" -%}
+{%- assign ser_part_num = ser_post.part | plus: 0 -%}
+{%- assign ser_part_back = ser_part_num | append: "" -%}
+{%- assign ser_part_whole = ser_part_num | floor -%}
+{%- if ser_part_num < 1 or ser_part_back != ser_part_str or ser_part_whole != ser_part_num -%}
+  {%- include errors/SERIES_part-must-be-a-whole-number-1-or-more.html -%}
+{%- endif -%}
+{%- comment -%}
+  Order the parts by number without `sort` (sort crashes on a non-number
+  part before the check above can report it): find the highest part, then
+  pick each part 1..max in turn. Parts that aren't whole numbers are left
+  out here and fail the check on their own page.
+{%- endcomment -%}
+{%- assign ser_all = site.posts | where: "series", ser_post.series -%}
+{%- assign ser_max = 0 -%}
+{%- comment -%} `floor` keeps the range whole even if a part is, say, 1.5. {%- endcomment -%}
+{%- for sp in ser_all -%}{%- assign sp_n = sp.part | plus: 0 | floor -%}{%- if sp_n > ser_max -%}{%- assign ser_max = sp_n -%}{%- endif -%}{%- endfor -%}
+{%- assign ser_posts = "" | split: "" -%}
+{%- for n in (1..ser_max) -%}
+  {%- assign ser_match = 0 -%}
+  {%- for sp in ser_all -%}
+    {%- assign sp_n = sp.part | plus: 0 -%}
+    {%- if sp_n == n -%}{%- assign ser_posts = ser_posts | push: sp -%}{%- assign ser_match = ser_match | plus: 1 -%}{%- endif -%}
+  {%- endfor -%}
+  {%- if ser_match > 1 -%}
+    {%- include errors/SERIES_DUPLICATE_part-two-posts-in-one-series-share-a-part-number.html -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- assign ser_total = ser_all | size -%}
+{%- assign ser_prev = nil -%}
+{%- assign ser_next = nil -%}
+{%- for sp in ser_posts -%}
+  {%- if sp.url == ser_post.url -%}{%- assign ser_i = forloop.index0 -%}{%- endif -%}
+{%- endfor -%}
+{%- if ser_i > 0 -%}{%- assign ser_pi = ser_i | minus: 1 -%}{%- assign ser_prev = ser_posts[ser_pi] -%}{%- endif -%}
+{%- assign ser_ni = ser_i | plus: 1 -%}
+{%- if ser_ni < ser_total -%}{%- assign ser_next = ser_posts[ser_ni] -%}{%- endif -%}
+{%- assign ser_anchor = ser_post.series | slugify -%}

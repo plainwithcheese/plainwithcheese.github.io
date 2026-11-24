@@ -1,0 +1,35 @@
+{%- comment -%}
+  Speaker line for a dialogue turn or an ai_excerpt:
+    {glyph} {monogram} {Name} {· model} {· edited mark}
+  Uses `dlg_p` (set by dialogue-participant.html). The glyph: the speaker's
+  own `glyph:` if set, else the by-hand mark for a human and the by-machine
+  mark for an AI (an AI speaking is "by machine"; prov-mark.html).
+
+  Params:
+    show_model — true to show the AI's model (first turn only, in dialogues)
+    edited     — light | heavy | true; anything else shows no mark
+
+  Output is a single line with no leading spaces, so it's safe inside
+  Markdown (ai_excerpt sits in a markdown="1" block).
+{%- endcomment -%}
+{%- assign dlg_glyph_file = "" -%}
+{%- if dlg_p.glyph -%}
+  {%- assign dlg_glyph_prefix = dlg_p.glyph | slice: 0, 8 -%}
+  {%- if dlg_glyph_prefix == "include:" -%}{%- assign dlg_glyph_file = dlg_p.glyph | remove_first: "include:" -%}{%- endif -%}
+{%- endif -%}
+{%- comment -%} Monogram: as set; for AIs, else the first two letters of the name. {%- endcomment -%}
+{%- assign dlg_mono = dlg_p.monogram -%}
+{%- if dlg_mono == nil and dlg_p.kind == "ai" -%}
+  {%- assign dlg_mono = "" -%}
+  {%- assign dlg_chars = dlg_p.name | upcase | split: "" -%}
+  {%- for dlg_ch in dlg_chars -%}
+    {%- if "ABCDEFGHIJKLMNOPQRSTUVWXYZ" contains dlg_ch -%}{%- assign dlg_mono = dlg_mono | append: dlg_ch -%}{%- endif -%}
+    {%- if dlg_mono.size >= 2 -%}{%- break -%}{%- endif -%}
+  {%- endfor -%}
+  {%- if dlg_mono == "" -%}{%- assign dlg_mono = "AI" -%}{%- endif -%}
+{%- endif -%}
+{%- assign dlg_edit = "" -%}
+{%- if include.edited == "heavy" -%}{%- assign dlg_edit = "condensed" -%}
+{%- elsif include.edited == "light" or include.edited == true or include.edited == "true" -%}{%- assign dlg_edit = "edited for length" -%}
+{%- endif -%}
+<span class="dlg-glyph" aria-hidden="true">{% if dlg_glyph_file != "" %}{% include glyphs/{{ dlg_glyph_file }} %}{% elsif dlg_p.glyph %}{{ dlg_p.glyph }}{% elsif dlg_p.kind == "ai" %}{% include prov-mark.html provenance="by_machine" %}{% else %}{% include prov-mark.html provenance="by_hand" %}{% endif %}</span>{% if dlg_mono %}<span class="dlg-monogram">{{ dlg_mono }}</span>{% endif %}<span class="dlg-name">{{ dlg_p.name }}</span>{% if include.show_model and dlg_p.kind == "ai" %}<span class="dlg-model">&middot; {{ dlg_p.model }}</span>{% endif %}{% if dlg_edit != "" %}<span class="dlg-edit">&middot; {{ dlg_edit }}</span>{% endif %}

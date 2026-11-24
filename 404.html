@@ -1,0 +1,63 @@
+---
+layout: default
+title: Not Found
+permalink: /404.html
+---
+{%- comment -%}
+  The 404 page.
+  - The big "404" and the "NOT ON THE MENU" heading (the page's h1).
+  - The poem, set as centered verse in the site's verse markup
+    (.verse.verse--center, a .verse__stanza per couplet, a .verse__line per
+    line), in the post body's size (scaled down on narrow phones so no line
+    wraps). "full menu" links to /menu/. Don't change its wording or
+    punctuation.
+  - "Here’s a Burger and a Side from the kitchen:", then one Burger and one
+    Side, in that order: a post's "More from" block (nav.more-from, its
+    .more-from__head heading, an h2 as on posts, and more-from-item.html
+    cards), so it looks and changes with it. Every eligible post of each is
+    rendered here (never a gated post or a local test post), each card in a
+    plain .not-found__row wrapper (`hidden` on the card itself would lose to
+    its display: block); without scripts the newest of each shows, and
+    assets/js/not-found.js shows one of each, picked at random on each load
+    (not the one shown last time, when there's a choice), as the footer stamp
+    is. A section with one post always shows it; one with none is left out
+    (and with neither, so is the block).
+  - "[back to the full menu →]": a post's back-to-the-menu link (the same
+    markup, .post-next__back), to the full menu, since the page has no
+    section.
+{%- endcomment %}
+<article class="not-found">
+  <div class="not-found__numeral">404</div>
+  <h1 class="not-found__subtitle">NOT ON THE MENU</h1>
+
+  <div class="verse verse--center not-found__poem">
+    <p class="verse__stanza"><span class="verse__line">The page that you are looking for</span><span class="verse__line">Doesn’t exist here anymore.</span></p>
+    <p class="verse__stanza"><span class="verse__line">There’s more, elsewhere, for me to show.</span><span class="verse__line">Just need to find the place to go.</span></p>
+    <p class="verse__stanza"><span class="verse__line">The <a href="{{ '/menu/' | relative_url }}">full menu</a> shows what’s in store.</span><span class="verse__line">But this page here is: 404.</span></p>
+  </div>
+
+  {%- assign nf_sections = "fiction,verse" | split: "," %}
+  {%- assign nf_any = false %}
+  {%- for nf_slug in nf_sections %}
+  {%- assign nf_posts = site.posts | where: "category", nf_slug | where_exp: "p", "p.content_warning != true" | where_exp: "p", "p.test_post != true" %}
+  {%- if nf_posts.size > 0 %}{% assign nf_any = true %}{% endif %}
+  {%- endfor %}
+  {%- if nf_any %}
+  <nav class="more-from" aria-labelledby="nf-picks-head">
+    <h2 class="more-from__head" id="nf-picks-head">Here’s a Burger and a Side from the kitchen:</h2>
+    {%- for nf_slug in nf_sections %}
+    {%- assign nf_posts = site.posts | where: "category", nf_slug | where_exp: "p", "p.content_warning != true" | where_exp: "p", "p.test_post != true" %}
+    {%- if nf_posts.size > 0 %}
+    <div data-nf-pick="{{ nf_slug }}">
+      {%- for nf_post in nf_posts %}
+      <div class="not-found__row"{% unless forloop.first %} hidden{% endunless %}>{% include more-from-item.html post=nf_post %}</div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+    {%- endfor %}
+  </nav>
+  {%- endif %}
+
+  <p class="post-next__back"><a class="bracket-link" href="{{ '/menu/' | relative_url }}">{% include bracket-text.html text=site.data.diner.post_end.back_full_menu %}</a></p>
+</article>
+<script src="{{ '/assets/js/not-found.js' | relative_url }}"></script>

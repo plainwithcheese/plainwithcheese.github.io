@@ -1,0 +1,31 @@
+{%- comment -%}
+  A provenance mark: the icon for a post's provenance, set in one place for
+  every page that shows one. Lucide icons (lucide-static 1.74.0,
+  ISC, in _includes/glyphs/ with LICENSE-lucide.txt):
+    by_hand → pen-line    assisted → blend    by_machine → bot
+  Each is an inline SVG drawn in the
+  text's color (stroke="currentColor"), 1em square, so the context's own
+  font-size sets its size, and it's dropped to sit on the baseline like a
+  capital (.prov-mark__icon in main.scss). The marks are --ink everywhere
+  (see main.scss). Output is one line, so it's safe inside Markdown.
+
+  Params:
+    provenance — by_hand | assisted | by_machine
+    label      — optional; true gives the mark an accessible name and tooltip
+                 ("by hand", "with machine collaboration", "by machine"),
+                 for places where no text beside it says so. Without it the
+                 mark is decorative (aria-hidden). The SVG itself is always
+                 aria-hidden; the span carries the name.
+    class      — optional extra class(es) for the mark's span
+{%- endcomment -%}
+{%- assign pm_file = "" -%}
+{%- assign pm_label = "" -%}
+{%- case include.provenance -%}
+  {%- when "by_hand" -%}{%- assign pm_file = "lucide-pen-line.svg" -%}{%- assign pm_label = "by hand" -%}
+  {%- when "assisted" -%}{%- assign pm_file = "lucide-blend.svg" -%}{%- assign pm_label = "with machine collaboration" -%}
+  {%- when "by_machine" -%}{%- assign pm_file = "lucide-bot.svg" -%}{%- assign pm_label = "by machine" -%}
+{%- endcase -%}
+{%- if pm_file != "" -%}
+{%- capture pm_svg -%}{% include glyphs/{{ pm_file }} %}{%- endcapture -%}
+<span class="prov-mark{% if include.class %} {{ include.class }}{% endif %}"{% if include.label %} role="img" aria-label="{{ pm_label }}" title="{{ pm_label }}"{% else %} aria-hidden="true"{% endif %}>{{ pm_svg | strip }}</span>
+{%- endif -%}

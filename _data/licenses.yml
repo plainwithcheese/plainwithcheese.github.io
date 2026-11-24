@@ -1,0 +1,24 @@
+# Licenses: the site default, and every license a section or post may use.
+#
+# Which license applies to a post: its own `license:` in front matter, else
+# its section's `license:` in _data/categories.yml, else `default` below.
+# A post shows its license in its footer only when it differs from the
+# default; the small print at the bottom of every page shows that page's
+# license (the default on pages that aren't posts or section pages).
+# The build fails if a post or section names a license that isn't listed.
+#
+# The build-your-own notice box (its wording) is separate, in
+# _data/license.yml; its `name` must match the license on any page that
+# shows it.
+#
+#   name — written exactly like this in `license:` values
+#   url  — optional; the license's official page (Creative Commons deeds)
+
+default: "CC BY-NC 4.0"
+
+list:
+  - name: "CC BY-NC 4.0"
+    url: https://creativecommons.org/licenses/by-nc/4.0/
+  - name: "CC BY 4.0"
+    url: https://creativecommons.org/licenses/by/4.0/
+  - name: "All rights reserved"

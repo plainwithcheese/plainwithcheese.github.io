@@ -1,0 +1,25 @@
+{%- comment -%}
+  `format: script` — a screenplay, as a PDF only (no HTML screenplay
+  rendering). A typeset title block, then the PDF viewer.
+
+  Front matter:
+    pdf           — the screenplay PDF (or put {% include pdf.html %} in the
+                    body instead); required, see validate-format-content.html
+    script_format — optional: short, feature, pilot…; shown in the title block
+    pages         — optional page count, shown in the title block
+    thumbnail     — optional cover / first-page image for the archive card
+{%- endcomment -%}
+<header class="script-block">
+  <p class="script-block__kicker">screenplay</p>
+  <p class="script-block__title">{{ page.title }}</p>
+  {%- if page.script_format or page.pages %}
+  <p class="script-block__meta">
+    {%- if page.script_format %}<span>{{ page.script_format }}</span>{% endif -%}
+    {%- if page.script_format and page.pages %} &middot; {% endif -%}
+    {%- if page.pages %}<span>{{ page.pages }} {% if page.pages == 1 %}page{% else %}pages{% endif %}</span>{% endif -%}
+  </p>
+  {%- endif %}
+</header>
+{%- if page.pdf %}
+{% include pdf.html src=page.pdf title=page.title hide_title=true %}
+{%- endif %}

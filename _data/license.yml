@@ -1,0 +1,15 @@
+# The build-your-own license notice. Shown, word for word, on every recipe
+# post and on the build-your-own section page (_includes/license.html).
+#
+# `name` must match the license that applies to those pages (Build Your
+# Own's `license:` in _data/categories.yml), or the build fails. If `name`
+# ever starts with "[LICENSE:" again, production builds (GitHub Pages) FAIL,
+# so nothing publishes unlicensed.
+#
+#   name — the license's name, as in _data/licenses.yml
+#   text — the notice shown to readers (Markdown)
+#   url  — optional link to the full license
+
+name: "CC BY 4.0"
+text: "Free to use, share and adapt, even commercially, as long as you credit plainwithcheese."
+url: https://creativecommons.org/licenses/by/4.0/

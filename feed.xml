@@ -1,0 +1,126 @@
+---
+# The site's own Atom feed, in place of jekyll-feed's: the plugin sees this
+# file and doesn't write its own, while {% feed_meta %} still links here.
+# It started as jekyll-feed 0.17's template (the version GitHub Pages runs),
+# so the URL, entry ids, dates, categories and the 10-post limit are as
+# before. What's added: each entry's content starts with what the post's
+# layout draws around the body (_includes/feed/<format>.html):
+#   artwork — the lead image (with its alt text), caption, work line, then
+#             the other views
+#   zine    — the cover, the print note, then a link to the PDF
+#   script  — the title block's details, then a link to the PDF
+#   recipe  — the recipe card, then the license
+#   verse   — the poem's line breaks (the layout sets each line on its own)
+# Then the post body, as before. A gated post (`content_warning: true`) opens
+# with one plain line first, "Content warning: <its notes>";
+# ungated posts carry no notes. Summary: `description`, else (artwork) the
+# work line, else the first paragraph. Thumbnail: `image`, else the artwork's
+# lead image, else `thumbnail` (a zine's or script's cover).
+# Entries keep the site's own order (site.posts: newest first, same-day posts
+# by filename), the order of the item codes and lists; there's no re-sort
+# here, since one doesn't keep same-day posts in order.
+# Times are UTC (_config.yml), worked out in post-times.html, which About's
+# "Last updated" shares: same-day posts share a midnight date, so each entry
+# is a second later than the same-day entry after it, and no two share a
+# time; a revised post's updated time is its `last_modified_at` (its latest
+# revision's date). The feed's own <updated> is the newest of them, so it
+# changes only when a post is added or revised, not on every build.
+# Validate it after any change here.
+layout: null
+sitemap: false
+permalink: /feed.xml
+---
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"{% if site.lang %} xml:lang="{{ site.lang }}"{% endif %}>
+  <generator uri="https://jekyllrb.com/" version="{{ jekyll.version }}">Jekyll</generator>
+  <link href="{{ page.url | absolute_url }}" rel="self" type="application/atom+xml" />
+  <link href="{{ '/' | absolute_url }}" rel="alternate" type="text/html"{% if site.lang %} hreflang="{{ site.lang }}"{% endif %} />
+  {%- comment -%} Every post's times (post-times.html, shared with About's "Last updated"): the entries' published and updated times, and the feed's own <updated>, the newest of them. {%- endcomment -%}
+  {%- include post-times.html -%}
+  {%- assign posts = pt_posts -%}
+  {%- assign posts_limit = site.feed.posts_limit | default: 10 %}
+  <updated>{% if pt_newest != "" %}{{ pt_newest }}{% else %}{{ site.time | date_to_xmlschema }}{% endif %}</updated>
+  <id>{{ page.url | absolute_url | xml_escape }}</id>
+  <title type="html">{{ site.title | smartify | xml_escape }}</title>
+  {%- if site.description %}
+  <subtitle>{{ site.description | xml_escape }}</subtitle>
+  {%- endif %}
+  {%- if site.author %}
+  <author>
+    <name>{{ site.author.name | default: site.author | xml_escape }}</name>
+  </author>
+  {%- endif %}
+  {%- for post in posts limit: posts_limit %}
+  {%- assign post_title = post.title | smartify | strip_html | normalize_whitespace | xml_escape %}
+  <entry>
+    <title type="html">{{ post_title }}</title>
+    <link href="{{ post.url | absolute_url }}" rel="alternate" type="text/html" title="{{ post_title }}" />
+    <published>{{ pt_pubs[forloop.index0] }}</published>
+    <updated>{{ pt_upds[forloop.index0] }}</updated>
+    <id>{{ post.id | absolute_url | xml_escape }}</id>
+    {%- comment -%} A gated post's entry opens with a one-line heads-up; ungated entries carry no notes. {%- endcomment -%}
+    {%- assign fe_cw = "" -%}
+    {%- if post.content_warning == true -%}
+      {%- include content-notes-data.html post=post -%}
+      {%- assign fe_cw_line = site.data.content_warning.feed_line | replace: "%notes%", cn_text -%}
+      {%- capture fe_cw %}<p>{{ fe_cw_line }}</p>{% endcapture -%}
+    {%- endif -%}
+    {%- capture fe_lead -%}
+      {%- if post.format == "artwork" -%}{% include feed/artwork.html post=post %}
+      {%- elsif post.format == "zine" -%}{% include feed/zine.html post=post %}
+      {%- elsif post.format == "script" -%}{% include feed/script.html post=post %}
+      {%- elsif post.format == "recipe" -%}{% include feed/recipe.html post=post %}
+      {%- endif -%}
+    {%- endcapture -%}
+    {%- assign fe_body = post.content | strip -%}
+    {%- if post.format == "verse" -%}
+      {%- comment -%}
+        A stanza's lines are newlines inside its <p>: keep them as line
+        breaks, but not the newlines between paragraphs (one or two). Liquid
+        strings can't hold "\n", so fe_nl captures a real one.
+      {%- endcomment -%}
+      {%- capture fe_nl %}
+{% endcapture -%}
+      {%- assign fe_br = "<br />" | append: fe_nl -%}
+      {%- assign fe_end2 = "</p>" | append: fe_br | append: fe_br -%}
+      {%- assign fe_end1 = "</p>" | append: fe_br -%}
+      {%- assign fe_endnl = "</p>" | append: fe_nl -%}
+      {%- assign fe_body = fe_body | newline_to_br | replace: fe_end2, fe_endnl | replace: fe_end1, fe_endnl -%}
+    {%- endif %}
+    <content type="html" xml:base="{{ post.url | absolute_url | xml_escape }}"><![CDATA[{{ fe_cw }}{{ fe_lead }}{{ fe_body }}]]></content>
+    {%- assign post_author = post.author | default: site.author %}
+    <author>
+      <name>{{ post_author.name | default: post_author | default: "" | xml_escape }}</name>
+    </author>
+    {%- if post.category %}
+    <category term="{{ post.category | xml_escape }}" />
+    {%- endif %}
+    {%- for tag in post.tags %}
+    <category term="{{ tag | xml_escape }}" />
+    {%- endfor %}
+    {%- assign post_summary = post.description -%}
+    {%- if post_summary == nil and post.format == "artwork" -%}
+      {%- capture post_summary -%}{% include artwork-details.html post=post %}{%- endcapture -%}
+    {%- endif -%}
+    {%- assign post_summary = post_summary | default: post.excerpt -%}
+    {%- assign post_summary = post_summary | strip_html | normalize_whitespace %}
+    {%- if post_summary != "" %}
+    <summary type="html"><![CDATA[{{ post_summary }}]]></summary>
+    {%- endif %}
+    {%- assign post_image = post.image.path | default: post.image -%}
+    {%- assign post_thumb = nil -%}
+    {%- if post_image == nil and post.format == "artwork" -%}
+      {%- assign post_image = post.images.first.src -%}
+      {%- if post.images.first.widths -%}{%- include media-url.html src=post_image w=post.images.first.widths.first -%}{%- assign post_thumb = mu_abs -%}{%- endif -%}
+    {%- endif -%}
+    {%- assign post_image = post_image | default: post.thumbnail -%}
+    {%- if post_image %}
+    {%- include media-url.html src=post_image -%}
+    {%- assign post_image = mu_abs -%}
+    {%- assign post_thumb = post_thumb | default: post_image %}
+    <media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="{{ post_thumb | xml_escape }}" />
+    <media:content medium="image" url="{{ post_image | xml_escape }}" xmlns:media="http://search.yahoo.com/mrss/" />
+    {%- endif %}
+  </entry>
+  {%- endfor %}
+</feed>

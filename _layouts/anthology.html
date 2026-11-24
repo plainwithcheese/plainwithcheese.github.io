@@ -1,0 +1,46 @@
+---
+layout: default
+---
+{%- comment -%}
+  An anthology's page (anthologies/<slug>.md, at /anthologies/<slug>/): its
+  title, cover and description from _data/anthologies.yml, then its pieces
+  as a contents list in menu-row style, in order (anthology-data.html), each
+  showing its section. The page's own `title:` must match the data's title
+  (it's what the browser tab shows).
+
+  The crumb links to the /anthologies/ index only once there are two or
+  more anthologies with pieces; with one, the index adds nothing.
+{%- endcomment -%}
+{%- include anthology-data.html slug=page.anthology -%}
+{%- unless page.title == anth.title -%}
+  {%- include errors/ANTHOLOGY_PAGE_title-must-match-its-title-in-_data-anthologies.yml.html -%}
+{%- endunless -%}
+{%- include anthology-list.html -%}
+
+<article class="archive anthology">
+  <div class="archive__crumb"><a href="{{ '/menu/' | relative_url }}" class="archive__crumb-link">Menu</a> &middot; {% if anth_list.size > 1 %}<a href="{{ '/anthologies/' | relative_url }}" class="archive__crumb-link">Anthology</a>{% else %}Anthology{% endif %}</div>
+  <header class="archive__title-block">
+    <h1 class="archive__title">{{ anth.title }}</h1>
+  </header>
+  {%- if anth.cover %}
+  {%- include media-url.html src=anth.cover %}
+  <figure class="anthology__cover">
+    <img src="{{ mu_src }}" alt="{{ anth.cover_alt | escape }}">
+  </figure>
+  {%- endif %}
+  {%- if anth.description %}
+  <div class="anthology__description">
+    {{ anth.description | markdownify }}
+  </div>
+  {%- endif %}
+  <p class="archive__count">{{ anth_pieces | size }} {% if anth_pieces.size == 1 %}item{% else %}items{% endif %}</p>
+
+  <div class="anthology__contents">
+    {%- for post in anth_pieces -%}
+      {%- include item-code.html post=post -%}
+      {% include menu-row.html hide_date=true post=post code=item_code section=true %}
+    {%- endfor -%}
+  </div>
+
+  {% include provenance-legend.html %}
+</article>

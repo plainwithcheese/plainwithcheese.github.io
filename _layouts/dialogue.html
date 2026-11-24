@@ -1,0 +1,33 @@
+---
+layout: default
+---
+{%- comment -%}
+  Standalone dialogue page for _dialogues/<slug>.md. Front matter holds the
+  dialogue (turns, optional participants/primary) plus title and date; any
+  Markdown body is shown as an introduction above the turns.
+  Belongs to the post named by `post:` (a post slug), or, without `post:`,
+  the post whose slug matches this file's name. Several dialogues can name
+  the same post; the post links to each, and each links back.
+  Build FAILS if `post:` is set but no post has that slug.
+{%- endcomment -%}
+{%- assign dlg_post_slug = page.post | default: page.slug -%}
+{%- assign dlg_post = site.posts | where: "slug", dlg_post_slug | first -%}
+{%- if page.post and dlg_post == nil -%}
+  {%- include errors/DIALOGUE_post-must-match-the-slug-of-an-existing-post.html -%}
+{%- endif -%}
+{%- if dlg_post -%}
+<nav class="post__back-crumb"><a href="{{ dlg_post.url | relative_url }}" class="post__back-link">&larr; {{ dlg_post.title }}</a></nav>
+{%- endif %}
+
+<article class="post dialogue-page">
+  <header class="post__title-block">
+    <p class="dialogue-page__kicker">Dialogue</p>
+    <h1 class="post__title">{{ page.title | default: dlg_post.title }}</h1>
+    {%- if page.date %}<p class="post__dek">{{ page.date | date: "%B %-d, %Y" }}</p>{% endif %}
+  </header>
+
+  <div class="post__body">
+    {{ content }}
+    {% include dialogue.html dialogue=page framed=false %}
+  </div>
+</article>

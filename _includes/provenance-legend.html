@@ -1,0 +1,12 @@
+{%- comment -%}
+  Key to the provenance marks used in menu rows, at the bottom of the home
+  page, the full menu and the Kid's Menu page. Section pages leave it out:
+  each card says what its mark means ("Made by hand").
+  Marks come from prov-mark.html; labels match
+  _includes/provenance-data.html.
+{%- endcomment -%}
+<p class="prov-legend">
+  <span class="prov-legend__item">{% include prov-mark.html provenance="by_hand" class="prov-legend__glyph" %} by hand</span>
+  <span class="prov-legend__item">{% include prov-mark.html provenance="assisted" class="prov-legend__glyph" %} with machine collaboration</span>
+  <span class="prov-legend__item">{% include prov-mark.html provenance="by_machine" class="prov-legend__glyph" %} by machine</span>
+</p>

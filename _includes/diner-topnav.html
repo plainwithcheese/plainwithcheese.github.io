@@ -1,0 +1,54 @@
+{%- comment -%}
+  The diner top strip, used on every page: "EST. 2026 · OPEN 24/7" left and
+  "MENU · ABOUT · FOLLOW" right (both from _data/nav.yml; FOLLOW with
+  Lucide's rss glyph before it, decorative), with the dark mode
+  toggle (a small moon or sun, Lucide icons; assets/js/theme.js) set apart just after
+  "OPEN 24/7", then the ornament divider. On phones the EST./OPEN line (with
+  the toggle) sits on its own row above the wordmark and the links.
+
+  Params:
+    wordmark — true puts a small one-line "PLAINwithCHEESE" in the center,
+               linking home (inner pages). The home page leaves it out,
+               since the big jar label sits right below.
+    divider  — false leaves out the ornament divider (default: shown). The
+               checker trim replaces it; see _layouts/default.html.
+{%- endcomment -%}
+{%- assign tn_wordmark = false -%}
+{%- if include.wordmark == true or include.wordmark == "true" -%}{%- assign tn_wordmark = true -%}{%- endif -%}
+<nav class="home-topnav{% if tn_wordmark %} home-topnav--wordmark{% endif %}" aria-label="Site navigation">
+  <div class="home-topnav__group home-topnav__group--left">
+    {%- for item in site.data.nav.left -%}
+      {%- unless forloop.first -%}<span class="home-topnav__dot" aria-hidden="true">·</span>{%- endunless -%}
+      {%- if item.href -%}
+        <a href="{{ item.href | relative_url }}" class="home-topnav__item">{{ item.label }}</a>
+      {%- else -%}
+        <span class="home-topnav__item">{{ item.label }}</span>
+      {%- endif -%}
+    {%- endfor %}
+    {%- assign tn_theme = site.data.nav.theme_toggle %}
+    <span class="theme-toggle-wrap" hidden><button type="button" class="theme-toggle" aria-label="{{ tn_theme.label }}" aria-pressed="false" data-tip="{{ tn_theme.tip_to_dark }}" data-tip-to-dark="{{ tn_theme.tip_to_dark }}" data-tip-to-light="{{ tn_theme.tip_to_light }}">
+      {%- comment -%} Lucide's moon and sun (_includes/glyphs/, LICENSE-lucide.txt there). {%- endcomment %}
+      {% include glyphs/lucide-moon.svg class="theme-toggle__moon" %}
+      {% include glyphs/lucide-sun.svg class="theme-toggle__sun" %}
+    </button></span>
+  </div>
+  {%- if tn_wordmark %}
+  <a class="topnav-wordmark" href="{{ '/' | relative_url }}" aria-label="{{ site.title }}, home">{{ site.wordmark.title | replace: "with", "<em>with</em>" }}</a>
+  {%- endif %}
+  <div class="home-topnav__group home-topnav__group--right">
+    {%- for item in site.data.nav.right -%}
+      {%- unless forloop.first -%}<span class="home-topnav__dot" aria-hidden="true">·</span>{%- endunless -%}
+      {%- if item.href and item.icon -%}
+        <a href="{{ item.href | relative_url }}" class="home-topnav__item home-topnav__item--icon">{% include glyphs/{{ item.icon }}.svg class="home-topnav__icon" %}{{ item.label }}</a>
+      {%- elsif item.href -%}
+        <a href="{{ item.href | relative_url }}" class="home-topnav__item">{{ item.label }}</a>
+      {%- else -%}
+        <span class="home-topnav__item">{{ item.label }}</span>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</nav>
+<script src="{{ '/assets/js/theme.js' | relative_url }}" defer></script>
+{%- unless include.divider == false or include.divider == "false" %}
+<div class="hr-orn" aria-hidden="true">━━━━━━━━━━━━</div>
+{%- endunless %}

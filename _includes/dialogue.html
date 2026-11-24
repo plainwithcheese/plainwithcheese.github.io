@@ -1,0 +1,88 @@
+{%- comment -%}
+  Dialogue renderer. One include, two entry points:
+
+    In a post:        {% include dialogue.html src="kerning" %}
+                      → reads _data/dialogues/kerning.yml
+    Standalone page:  _layouts/dialogue.html passes the page itself
+                      (_dialogues/<slug>.md → /dialogues/<slug>/)
+                      ({% include dialogue.html dialogue=page framed=false %})
+
+  Dialogue fields:
+    turns         — required list of { from: <id>, body: <markdown>, edited: light|heavy }
+    participants  — optional list of full participant entries (with `id:`) that
+                    add to or override _data/participants.yml for this dialogue
+    primary       — optional id of the right-hand speaker. Otherwise the first
+                    participant marked `primary: true` wins (dialogue list
+                    first, then speakers in turn order).
+    caption       — optional header text; default "Dialogue · with <names>"
+    date          — optional; shown in the header
+
+  Layout: the primary speaker's turns sit on the right with
+  the rule on the right edge; everyone else sits left with the rule on the left.
+  An AI's model is shown on its first turn only.
+
+  Build FAILS if the src file is missing, there are no turns, or any speaker
+  is unknown or invalid (see dialogue-participant.html).
+{%- endcomment -%}
+{%- if include.src -%}
+  {%- assign dlg = site.data.dialogues[include.src] -%}
+  {%- unless dlg -%}
+    {%- include errors/DIALOGUE_NOT_FOUND-src-must-name-a-file-in-_data-dialogues.html -%}
+  {%- endunless -%}
+{%- else -%}
+  {%- assign dlg = include.dialogue -%}
+{%- endif -%}
+{%- unless dlg.turns and dlg.turns.size > 0 -%}
+  {%- include errors/DIALOGUE_NEEDS_turns-at-least-one-entry.html -%}
+{%- endunless -%}
+{%- assign dlg_local = dlg.participants | default: empty -%}
+
+{%- comment -%} Validate every speaker up front, and find the primary. {%- endcomment -%}
+{%- assign dlg_primary = dlg.primary -%}
+{%- unless dlg_primary -%}
+  {%- for dlg_lp in dlg_local -%}
+    {%- if dlg_lp.primary -%}{%- assign dlg_primary = dlg_lp.id -%}{%- break -%}{%- endif -%}
+  {%- endfor -%}
+{%- endunless -%}
+{%- assign dlg_others = "" -%}
+{%- for dlg_turn in dlg.turns -%}
+  {%- include dialogue-participant.html id=dlg_turn.from local=dlg_local -%}
+  {%- if dlg_primary == nil and dlg_p.primary -%}{%- assign dlg_primary = dlg_turn.from -%}{%- endif -%}
+{%- endfor -%}
+{%- if dlg.primary -%}{%- include dialogue-participant.html id=dlg.primary local=dlg_local -%}{%- endif -%}
+
+{%- comment -%} Header names: everyone except the primary, in order of first turn. {%- endcomment -%}
+{%- assign dlg_seen = "|" -%}
+{%- for dlg_turn in dlg.turns -%}
+  {%- assign dlg_key = "|" | append: dlg_turn.from | append: "|" -%}
+  {%- if dlg_turn.from != dlg_primary -%}
+    {%- unless dlg_seen contains dlg_key -%}
+      {%- include dialogue-participant.html id=dlg_turn.from local=dlg_local -%}
+      {%- if dlg_others == "" -%}{%- assign dlg_others = dlg_p.name -%}{%- else -%}{%- assign dlg_others = dlg_others | append: ", " | append: dlg_p.name -%}{%- endif -%}
+      {%- assign dlg_seen = dlg_seen | append: dlg_turn.from | append: "|" -%}
+    {%- endunless -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- assign dlg_framed = true -%}
+{%- if include.framed == false or include.framed == "false" -%}{%- assign dlg_framed = false -%}{%- endif -%}
+<div class="dialogue{% if dlg_framed %} dialogue--framed{% endif %}">
+{%- if dlg_framed %}
+<p class="dialogue__header">&mdash; {% if dlg.caption %}{{ dlg.caption }}{% else %}Dialogue{% if dlg_others != "" %} &middot; with {{ dlg_others }}{% endif %}{% endif %}{% if dlg.date %} &middot; {{ dlg.date | date: "%b %-d, %Y" }}{% endif %} &mdash;</p>
+{%- endif %}
+{%- assign dlg_models_shown = "|" -%}
+{%- for dlg_turn in dlg.turns -%}
+  {%- include dialogue-participant.html id=dlg_turn.from local=dlg_local -%}
+  {%- assign dlg_key = "|" | append: dlg_turn.from | append: "|" -%}
+  {%- assign dlg_show_model = false -%}
+  {%- if dlg_p.kind == "ai" -%}
+    {%- unless dlg_models_shown contains dlg_key -%}
+      {%- assign dlg_show_model = true -%}
+      {%- assign dlg_models_shown = dlg_models_shown | append: dlg_turn.from | append: "|" -%}
+    {%- endunless -%}
+  {%- endif %}
+<div class="dlg-turn {% if dlg_turn.from == dlg_primary %}dlg-turn--primary{% else %}dlg-turn--other{% endif %}"{% if dlg_p.accent %} style="--dlg-accent: {{ dlg_p.accent | escape }}"{% endif %}>
+<p class="dlg-turn__speaker">{% include dialogue-speaker.html show_model=dlg_show_model edited=dlg_turn.edited %}</p>
+<div class="dlg-turn__body">{{ dlg_turn.body | markdownify }}</div>
+</div>
+{%- endfor %}
+</div>

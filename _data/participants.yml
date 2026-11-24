@@ -1,0 +1,44 @@
+# Dialogue participants — define each speaker once, refer to them by id in
+# dialogues (_data/dialogues/*.yml, _dialogues/*.md) and in ai_excerpt.
+#
+#   name      — shown on the speaker line (required)
+#   kind      — human | ai (required)
+#   model     — required for kind: ai; shown after the name on its first turn
+#   monogram  — optional short label (AIs get one derived from the name if
+#               omitted; humans only show one if it's set)
+#   accent    — optional CSS color; tints the speaker line and rule
+#   glyph     — optional "include:<file>.svg" from _includes/glyphs/; default
+#               is the by-hand mark (Lucide pen-line) for humans and the
+#               by-machine mark (Lucide bot) for AIs, from prov-mark.html
+#   primary   — true puts this speaker on the right in dialogues (first wins)
+#
+# A dialogue can override any of these for itself by listing a participant
+# with the same id under its own `participants:`.
+
+plainwithcheese:
+  name: plainwithcheese
+  kind: human
+  primary: true
+  monogram: PWC
+  glyph: include:plainwithcheese.svg
+
+claude:
+  name: Claude
+  kind: ai
+  model: claude-opus-5-5
+  monogram: CL
+  accent: "#D97757"
+
+gpt:
+  name: GPT
+  kind: ai
+  model: gpt-5
+  monogram: GP
+  accent: "#10A37F"
+
+gemini:
+  name: Gemini
+  kind: ai
+  model: gemini-2.5-pro
+  monogram: GE
+  accent: "#4285F4"

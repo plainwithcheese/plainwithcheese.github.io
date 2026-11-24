@@ -1,0 +1,8 @@
+{%- comment -%}
+  @license lucide-static v1.74.0 - ISC
+  Lucide's `pen-line` icon, from https://cdn.jsdelivr.net/npm/lucide-static@1.74.0/icons/pen-line.svg
+  (paths unchanged; the attributes are Lucide's, with a class, a 1em size,
+  aria-hidden and focusable added). License: LICENSE-lucide.txt here.
+  Used for: by_hand (prov-mark.html). Output is one line.
+{%- endcomment -%}
+<svg class="prov-mark__icon" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>

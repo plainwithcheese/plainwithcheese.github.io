@@ -1,0 +1,40 @@
+{%- comment -%}
+  One post row in a menu list (home page sections, /menu/ and anthology
+  contents).
+
+  Params:
+    post  — the post
+    code  — item code shown in the left column, e.g. "08-M"
+    hide_date — optional; true leaves out the date line (see list-dates.html)
+    section — optional; true shows the post's section name under the title
+              (anthology contents, where pieces come from several sections)
+
+  Layout: code | title, then section (if asked), then date, then the dek
+  (or, for an artwork post without one, its work line: artwork-details.html)
+  with the provenance mark (prov-mark.html, from the post's `provenance`)
+  trailing it. A non-breaking space ties the mark to the dek's last word,
+  inside a no-wrap span (browsers will otherwise break before an inline
+  icon even after a non-breaking space), so it never wraps onto a line of
+  its own.
+{%- endcomment -%}
+<a href="{{ include.post.url | relative_url }}" class="menu-index__row">
+  <span class="menu-index__row-code">{{ include.code }}</span>
+  <span class="menu-index__row-body">
+    <span class="menu-index__row-name">{{ include.post.title }}</span>
+    {%- if include.section %}
+    {%- assign mr_section = site.data.categories | where: "slug", include.post.category | first %}
+    <span class="menu-index__row-section">{{ mr_section.display | default: include.post.category }}</span>
+    {%- endif %}
+    {%- unless include.hide_date %}
+    <span class="menu-index__row-date">{{ include.post.date | date: "%b %-d, %Y" }}</span>
+    {%- endunless %}
+    {%- assign mr_note = include.post.dek | default: "" -%}
+    {%- if mr_note == "" and include.post.format == "artwork" -%}{%- capture mr_note -%}{% include artwork-details.html post=include.post %}{%- endcapture -%}{%- endif -%}
+    {%- if mr_note != "" or include.post.provenance %}
+    <span class="menu-index__row-excerpt">
+      {{- mr_note -}}
+      {%- if include.post.provenance %}<span class="menu-index__row-tail">&nbsp;{% include prov-mark.html provenance=include.post.provenance label=true class="menu-index__row-prov" %}</span>{% endif -%}
+    </span>
+    {%- endif %}
+  </span>
+</a>

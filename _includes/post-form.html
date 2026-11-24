@@ -1,0 +1,17 @@
+{%- comment -%}
+  A post's form word: what kind of piece it is, for
+  its header line ("No. 04-B · Burgers · short story"), its tab title ("The
+  Caver · a short story · plainwithcheese") and the start of its share card's
+  text ("A short story. …"). The post's own `form:` if set (I Am Not
+  Creative "blog"; Sea and the Counterfeiter "fable"), else its section's
+  `form:` in _data/categories.yml (Burgers "short story", Sides "poem",
+  Desserts "painting", Drinks "essay"). Sets:
+    post_form         — the word, lowercase ("" when there's none)
+    post_form_article — "a" or "an" for it
+  Param: post
+{%- endcomment -%}
+{%- assign pf_section = site.data.categories | where: "slug", include.post.category | first -%}
+{%- assign post_form = include.post.form | default: pf_section.form | default: "" | strip -%}
+{%- assign post_form_article = "a" -%}
+{%- assign pf_first = post_form | slice: 0, 1 | downcase -%}
+{%- if pf_first != "" and "aeiou" contains pf_first -%}{%- assign post_form_article = "an" -%}{%- endif -%}

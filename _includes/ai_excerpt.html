@@ -1,0 +1,23 @@
+{%- comment -%}
+  Opens a single-passage excerpt — one participant's words, quoted like a
+  blockquote with the dialogue speaker line. Close it with end_ai_excerpt.html:
+
+    {% include ai_excerpt.html who="claude" edited="light" %}
+    Any **Markdown** here, any number of paragraphs. [...]
+    {% include end_ai_excerpt.html %}
+
+  Params:
+    who     — participant id from _data/participants.yml (any kind; required)
+    edited  — optional: light ("edited for length") | heavy ("condensed")
+
+  Bars: 3px ink outer bar; when the participant has an
+  accent, a 2px accent bar inset after a 1px gap.
+  Build FAILS if `who` is missing or not a valid participant.
+{%- endcomment -%}
+{%- unless include.who -%}
+  {%- include errors/AI_EXCERPT_REQUIRES_who-attribute.html -%}
+{%- endunless -%}
+{%- include dialogue-participant.html id=include.who -%}
+<figure class="dlg-excerpt{% if dlg_p.accent %} dlg-excerpt--accent{% endif %}"{% if dlg_p.accent %} style="--dlg-accent: {{ dlg_p.accent | escape }}"{% endif %} markdown="1">
+<figcaption class="dlg-excerpt__speaker">{% include dialogue-speaker.html show_model=true edited=include.edited %}</figcaption>
+

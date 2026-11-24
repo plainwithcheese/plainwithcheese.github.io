@@ -1,0 +1,29 @@
+{%- comment -%}
+  An artwork post's work line: its `medium`, `dimensions` and year,
+  whichever are set, in that order, joined by " · ". All three are optional.
+  The year is `year:` if set (free text, so "c. 2019" or "2019–21" work),
+  else the year of the post's `created:`; never the post's
+  `date`. Nothing else is filled in. Outputs nothing when none are set.
+
+  Each part is a span, .artwork__part, that wraps as a unit, with its dot
+  trailing it (so a wrapped line ends "… ·" and never starts with a dot), and
+  a part too long for a line still wraps inside itself. No space after the
+  last part, so a provenance mark can follow it.
+
+  Used under the image on the post (format-artwork.html), and in place of
+  the dek on cards and menu rows when the post has no dek (archive-card.html,
+  menu-row.html).
+
+  Param: post
+{%- endcomment -%}
+{%- assign ad_parts = "" | split: "" -%}
+{%- if include.post.medium -%}{%- assign ad_parts = ad_parts | push: include.post.medium -%}{%- endif -%}
+{%- if include.post.dimensions -%}{%- assign ad_parts = ad_parts | push: include.post.dimensions -%}{%- endif -%}
+{%- assign ad_year = include.post.year -%}
+{%- if ad_year == nil and include.post.created -%}{%- assign ad_year = include.post.created | append: "" | slice: 0, 4 -%}{%- endif -%}
+{%- if ad_year -%}{%- assign ad_parts = ad_parts | push: ad_year -%}{%- endif -%}
+{%- for ad_part in ad_parts -%}
+  {%- if forloop.first -%}<span class="artwork__part">{{ ad_part }}{% unless forloop.last %}&nbsp;&middot;{% endunless %}</span>
+  {%- else %} <span class="artwork__part">{{ ad_part }}{% unless forloop.last %}&nbsp;&middot;{% endunless %}</span>
+  {%- endif -%}
+{%- endfor -%}

@@ -1,0 +1,97 @@
+{%- comment -%}
+  `format: artwork` — one painting, drawing or sketch, shown as the piece.
+  The lead image is large, and a click enlarges it (the gallery's lightbox,
+  assets/js/lightbox.js). Under it: its caption and the work's details
+  line. Any further images of the same work (details, angles, process
+  shots) follow as small thumbnails, which open in the same lightbox. The
+  post body follows as a note. For a set of different works, use `gallery`.
+
+  Front matter:
+    images     — one or more; the first is the lead. Each needs `src` and
+                 `alt`; `caption` is optional (60 characters or fewer).
+                 `src` follows media-url.html: "/…" is a file in the repo,
+                 and a path without the "/" is on the media host. There,
+                 each also needs `width` and `height` (the full-size file's
+                 pixels; the build can't measure it), and `widths` lists its
+                 smaller copies, e.g. [800, 1200] for jellyfish-800.jpg and
+                 jellyfish-1200.jpg beside jellyfish.jpg. Checked in
+                 validate-format-content.html.
+    medium     — optional, e.g. "Watercolour on paper"
+    dimensions — optional, e.g. "9 × 12 in." (the multiplication sign ×,
+                 not the letter x)
+    year       — optional: the year the work was made, as free text ("c. 2019",
+                 "2019–21"). Without it, the year of `created:` is used.
+                 Never filled in from the post's date or a
+                 photo's.
+  The details line (the work line, artwork-details.html) shows whichever of
+  the three are set, joined by " · ", and is left out with none. Cards and
+  menu rows show it in place of the dek when there's no dek. There are no
+  figure numbers.
+
+  The lead image: its `width` and `height` reserve its space before it
+  loads, and with `widths` the browser picks the smallest copy that fills
+  the column at the screen's density (`sizes`: the column is 592px, or the
+  window less main's 24px gutters on phones). It's fetched first
+  (fetchpriority), being the page's largest picture.
+
+  WebP: an image on the media host is served as WebP where the browser
+  takes it (a <picture> with the same widths), with its JPG (or PNG) as the
+  fallback; the lightbox opens the WebP too. The files sit beside the
+  originals with the same names (jellyfish-800.webp). An image without them
+  sets `webp: false`. Share cards and the feed keep the originals.
+
+  The card thumbnail is the lead image unless `thumbnail` is set
+  (archive-card.html). Without JavaScript, each image links to its
+  full-size file.
+{%- endcomment -%}
+{%- assign aw_images = page.images -%}
+{%- assign aw_lead = aw_images.first -%}
+{%- capture aw_details -%}{% include artwork-details.html post=page %}{%- endcapture -%}
+{%- include media-url.html src=aw_lead.src -%}
+{%- assign aw_full = mu_src -%}
+{%- assign aw_srcset = "" -%}
+{%- assign aw_webp_srcset = "" -%}
+{%- assign aw_webp_full = "" -%}
+{%- assign aw_first = aw_lead.src | slice: 0, 1 -%}
+{%- assign aw_webp = true -%}
+{%- if aw_first == "/" or aw_lead.webp == false %}{% assign aw_webp = false %}{% endif -%}
+{%- if aw_webp %}{% include media-url.html src=aw_lead.src ext="webp" %}{% assign aw_webp_full = mu_src %}{% endif -%}
+{%- if aw_lead.widths and aw_lead.width -%}
+  {%- for aw_w in aw_lead.widths -%}
+    {%- include media-url.html src=aw_lead.src w=aw_w -%}
+    {%- capture aw_srcset %}{{ aw_srcset }}{{ mu_src }} {{ aw_w }}w, {% endcapture -%}
+    {%- if aw_webp -%}
+      {%- include media-url.html src=aw_lead.src w=aw_w ext="webp" -%}
+      {%- capture aw_webp_srcset %}{{ aw_webp_srcset }}{{ mu_src }} {{ aw_w }}w, {% endcapture -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- capture aw_srcset %}{{ aw_srcset }}{{ aw_full }} {{ aw_lead.width }}w{% endcapture -%}
+  {%- if aw_webp %}{% capture aw_webp_srcset %}{{ aw_webp_srcset }}{{ aw_webp_full }} {{ aw_lead.width }}w{% endcapture %}{% endif -%}
+{%- elsif aw_webp -%}
+  {%- assign aw_webp_srcset = aw_webp_full -%}
+{%- endif %}
+<div class="artwork" data-gallery>
+  <figure class="artwork__lead">
+    <a class="artwork__link" href="{{ aw_full }}"{% if aw_webp %} data-webp="{{ aw_webp_full }}"{% endif %} data-caption="{{ aw_lead.caption | escape }}"{% if aw_lead.width and aw_lead.height %} style="--aw-w: {{ aw_lead.width }}; --aw-h: {{ aw_lead.height }}"{% endif %}><picture>{% if aw_webp %}<source type="image/webp" srcset="{{ aw_webp_srcset }}"{% if aw_srcset != "" %} sizes="(max-width: 640px) calc(100vw - 48px), 592px"{% endif %}>{% endif %}<img class="artwork__img" src="{{ aw_full }}"{% if aw_srcset != "" %} srcset="{{ aw_srcset }}" sizes="(max-width: 640px) calc(100vw - 48px), 592px"{% endif %}{% if aw_lead.width and aw_lead.height %} width="{{ aw_lead.width }}" height="{{ aw_lead.height }}"{% endif %} alt="{{ aw_lead.alt | escape }}" fetchpriority="high"></picture></a>
+    {%- if aw_lead.caption or aw_details != "" %}
+    <figcaption class="artwork__label">
+      {%- if aw_lead.caption %}<p class="artwork__caption">{{ aw_lead.caption }}</p>{% endif -%}
+      {%- if aw_details != "" %}<p class="artwork__details">{{ aw_details }}</p>{% endif -%}
+    </figcaption>
+    {%- endif %}
+  </figure>
+  {%- if aw_images.size > 1 %}
+  <ul class="artwork__more">
+    {%- for aw in aw_images offset: 1 %}
+    {%- include media-url.html src=aw.src -%}{%- assign aw_href = mu_src -%}
+    {%- assign aw_more_first = aw.src | slice: 0, 1 -%}
+    {%- assign aw_more_webp = true -%}
+    {%- if aw_more_first == "/" or aw.webp == false %}{% assign aw_more_webp = false %}{% endif -%}
+    {%- if aw_more_webp %}{% include media-url.html src=aw.src ext="webp" %}{% assign aw_more_webp_full = mu_src %}{% if aw.widths %}{% include media-url.html src=aw.src w=aw.widths.first ext="webp" %}{% endif %}{% assign aw_more_webp_thumb = mu_src %}{% endif -%}
+    {%- if aw.widths -%}{%- include media-url.html src=aw.src w=aw.widths.first -%}{%- else -%}{%- include media-url.html src=aw.src -%}{%- endif %}
+    <li><a class="artwork__link artwork__more-link" href="{{ aw_href }}"{% if aw_more_webp %} data-webp="{{ aw_more_webp_full }}"{% endif %} data-caption="{{ aw.caption | escape }}"><picture>{% if aw_more_webp %}<source type="image/webp" srcset="{{ aw_more_webp_thumb }}">{% endif %}<img class="artwork__thumb" src="{{ mu_src }}" alt="{{ aw.alt | escape }}" loading="lazy"></picture></a></li>
+    {%- endfor %}
+  </ul>
+  {%- endif %}
+</div>
+<script type="module" src="{{ '/assets/js/lightbox.js' | relative_url }}"></script>

@@ -1,0 +1,10 @@
+{%- comment -%}
+  Sets `sec_code` to the item-code letter(s) for a section slug, from
+  `code:` in _data/categories.yml (default: first letter of its display
+  name, else of the slug). Used to build codes like "03-B".
+
+  Param: slug — the section slug (a post's `category`)
+{%- endcomment -%}
+{%- assign sec_meta = site.data.categories | where: "slug", include.slug | first -%}
+{%- assign sec_code = sec_meta.code -%}
+{%- unless sec_code -%}{%- assign sec_code = sec_meta.display | default: include.slug | slice: 0, 1 | upcase -%}{%- endunless -%}

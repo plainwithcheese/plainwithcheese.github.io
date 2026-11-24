@@ -1,0 +1,36 @@
+{%- comment -%}
+  Every post's published and updated times, shared by the feed (feed.xml)
+  and About's "Last updated" (about.html), so the two always agree. Times
+  are UTC (_config.yml), in the feed's format (2026-11-18T00:00:00+00:00).
+  Sets:
+    pt_posts  — the posts (site.posts without drafts), newest first, in the
+                site's own order (same-day posts by filename)
+    pt_pubs   — each post's published time, in pt_posts' order: its date,
+                plus a second for every later same-day post, so no two share
+                a time
+    pt_upds   — each post's updated time: its `last_modified_at` (the build
+                makes that its latest revision's date), else its published
+                time
+    pt_newest — the latest updated time, "" with no posts. It changes only
+                when a post is added or revised, never with the build's clock.
+{%- endcomment -%}
+{%- assign pt_posts = site.posts | where_exp: "post", "post.draft != true" -%}
+{%- assign pt_pubs = "" | split: "" -%}
+{%- assign pt_upds = "" | split: "" -%}
+{%- assign pt_newest = "" -%}
+{%- for pt_post in pt_posts -%}
+  {%- assign pt_i = forloop.index -%}
+  {%- assign pt_day = pt_post.date | date: "%Y-%m-%d" -%}
+  {%- assign pt_bump = 0 -%}
+  {%- for pt_o in pt_posts offset: pt_i -%}
+    {%- assign pt_o_day = pt_o.date | date: "%Y-%m-%d" -%}
+    {%- if pt_o_day == pt_day -%}{%- assign pt_bump = pt_bump | plus: 1 -%}{%- else -%}{%- break -%}{%- endif -%}
+  {%- endfor -%}
+  {%- assign pt_pub = pt_post.date | date_to_xmlschema -%}
+  {%- if pt_bump > 0 -%}{%- assign pt_pub = pt_post.date | date: "%s" | plus: pt_bump | date: "%Y-%m-%dT%H:%M:%S%:z" -%}{%- endif -%}
+  {%- assign pt_upd = pt_pub -%}
+  {%- if pt_post.last_modified_at -%}{%- assign pt_upd = pt_post.last_modified_at | date_to_xmlschema -%}{%- endif -%}
+  {%- assign pt_pubs = pt_pubs | push: pt_pub -%}
+  {%- assign pt_upds = pt_upds | push: pt_upd -%}
+  {%- if pt_upd > pt_newest -%}{%- assign pt_newest = pt_upd -%}{%- endif -%}
+{%- endfor -%}

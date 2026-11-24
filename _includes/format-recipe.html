@@ -1,0 +1,34 @@
+{%- comment -%}
+  `format: recipe` — a build-your-own idea as a recipe card, from front
+  matter, followed by the license (_includes/license.html). Any body text
+  appears after the card.
+
+  Front matter (all required; see validate-format-content.html):
+    premise     — one or two sentences (Markdown)
+    serves      — the form it suits: feature, short, song, story…
+    ingredients — a list: inspirations and parts (Markdown per item)
+    method      — how it's made (Markdown, any length)
+{%- endcomment -%}
+<section class="recipe-card" aria-label="Recipe">
+  <div class="recipe-card__row recipe-card__premise">
+    <p class="recipe-card__label">Premise</p>
+    <div class="recipe-card__value">{{ page.premise | markdownify }}</div>
+  </div>
+  <div class="recipe-card__row">
+    <p class="recipe-card__label">Serves</p>
+    <p class="recipe-card__value">{{ page.serves }}</p>
+  </div>
+  <div class="recipe-card__row">
+    <p class="recipe-card__label">Ingredients</p>
+    <ul class="recipe-card__ingredients">
+      {%- for ing in page.ingredients %}
+      <li>{{ ing | markdownify | remove: "<p>" | remove: "</p>" | strip }}</li>
+      {%- endfor %}
+    </ul>
+  </div>
+  <div class="recipe-card__row">
+    <p class="recipe-card__label">Method</p>
+    <div class="recipe-card__value recipe-card__method">{{ page.method | markdownify }}</div>
+  </div>
+</section>
+{% include license.html %}

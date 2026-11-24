@@ -1,0 +1,28 @@
+{%- comment -%}
+  `format: zine` — a zine, as a PDF. Cover image, optional print note, then
+  the PDF viewer.
+
+  Front matter:
+    pdf        — the zine PDF (or put {% include pdf.html %} in the body);
+                 required, see validate-format-content.html
+    thumbnail  — the cover image: shown here above the viewer and on the
+                 archive card
+    print_note — optional Markdown "print it yourself" note (paper size,
+                 folding, binding…)
+{%- endcomment -%}
+{%- if page.thumbnail %}
+{%- include validate-media-src.html src=page.thumbnail -%}
+{%- include media-url.html src=page.thumbnail %}
+<figure class="zine-cover">
+  <img src="{{ mu_src }}" alt="Cover of {{ page.title | escape }}">
+</figure>
+{%- endif %}
+{%- if page.print_note %}
+<aside class="zine-print" role="note">
+  <p class="zine-print__label">Print it yourself</p>
+  <div class="zine-print__text">{{ page.print_note | markdownify }}</div>
+</aside>
+{%- endif %}
+{%- if page.pdf %}
+{% include pdf.html src=page.pdf title=page.title %}
+{%- endif %}

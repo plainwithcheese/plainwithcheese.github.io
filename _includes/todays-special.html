@@ -1,0 +1,15 @@
+{%- comment -%}
+  Sets `special`, today's special: the newest post by `date`, skipping any
+  section with `never_special: true` in _data/categories.yml (Desserts:
+  art is never the special), and any local test post (`test_post: true`,
+  never committed). nil when there's none. The one place it's picked, so
+  the home page's panel and its footer line agree.
+{%- endcomment -%}
+{%- assign special = nil -%}
+{%- for ts_p in site.posts -%}
+  {%- assign ts_sec = site.data.categories | where: "slug", ts_p.category | first -%}
+  {%- unless ts_sec.never_special == true or ts_p.test_post == true -%}
+    {%- assign special = ts_p -%}
+    {%- break -%}
+  {%- endunless -%}
+{%- endfor -%}

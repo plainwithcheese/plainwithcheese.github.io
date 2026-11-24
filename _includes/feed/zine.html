@@ -1,0 +1,12 @@
+{%- comment -%}
+  Feed version of format-zine.html (feed.xml): the cover, the print note,
+  then a link to the PDF, labeled as in print ("Served as a PDF:",
+  `print.pdf_label` in _data/diner.yml), since a feed reader can't show the
+  PDF viewer.
+
+  Param: post
+{%- endcomment -%}
+{%- assign fz = include.post -%}
+{%- if fz.thumbnail %}{% include media-url.html src=fz.thumbnail %}<p><img src="{{ mu_abs }}" alt="Cover of {{ fz.title | escape }}"></p>{% endif -%}
+{%- if fz.print_note %}<p><strong>Print it yourself</strong></p>{{ fz.print_note | markdownify }}{% endif -%}
+{%- if fz.pdf %}{% include media-url.html src=fz.pdf %}<p>{{ site.data.diner.print.pdf_label }} <a href="{{ mu_abs }}">{{ fz.title }}</a></p>{% endif -%}

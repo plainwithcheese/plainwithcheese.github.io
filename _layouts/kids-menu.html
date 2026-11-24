@@ -1,0 +1,35 @@
+---
+layout: default
+---
+{%- comment -%}
+  The Kid's Menu's page (at the `url` in _data/kids_menu.yml): its title,
+  gloss and description, then its pieces in menu-row style, newest first,
+  each with its own code and section (kids-menu-data.html).
+{%- endcomment -%}
+{%- include kids-menu-data.html -%}
+<article class="archive kids-menu">
+  <div class="archive__crumb"><a href="{{ '/menu/' | relative_url }}" class="archive__crumb-link">Menu</a> &middot; {{ kids.title }}</div>
+  <header class="archive__title-block">
+    <h1 class="archive__title">{{ kids.title }}</h1>
+    {%- if kids.gloss %}
+    <p class="archive__gloss">{{ kids.gloss }}</p>
+    {%- endif %}
+  </header>
+  {%- if kids.description %}
+  {%- comment -%} The content-notes control's label, where the description names it, set like the control (as on the gate card). {%- endcomment %}
+  {%- capture km_ref %}<span class="cw__ref">{{ site.data.content_warning.toggle }}</span>{% endcapture %}
+  <div class="anthology__description">
+    {{ kids.description | replace: site.data.content_warning.toggle, km_ref | markdownify }}
+  </div>
+  {%- endif %}
+  <p class="archive__count">{{ kids_pieces | size }} {% if kids_pieces.size == 1 %}item{% else %}items{% endif %}</p>
+
+  <div class="anthology__contents">
+    {%- for post in kids_pieces -%}
+      {%- include item-code.html post=post -%}
+      {% include menu-row.html hide_date=true post=post code=item_code section=true %}
+    {%- endfor -%}
+  </div>
+
+  {% include provenance-legend.html %}
+</article>

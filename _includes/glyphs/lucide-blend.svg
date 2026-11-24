@@ -1,0 +1,8 @@
+{%- comment -%}
+  @license lucide-static v1.74.0 - ISC
+  Lucide's `blend` icon, from https://cdn.jsdelivr.net/npm/lucide-static@1.74.0/icons/blend.svg
+  (paths unchanged; the attributes are Lucide's, with a class, a 1em size,
+  aria-hidden and focusable added). License: LICENSE-lucide.txt here.
+  Used for: assisted (prov-mark.html). Output is one line.
+{%- endcomment -%}
+<svg class="prov-mark__icon" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="15" cy="9" r="7"/><circle cx="9" cy="15" r="7"/></svg>

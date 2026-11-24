@@ -1,0 +1,95 @@
+{%- comment -%}
+  One row of the menu-index card grid.
+
+  Caller passes:
+    post — a post object
+    code — item code string (e.g., "A-01")
+
+  Image: the post's `thumbnail:` front matter, else (artwork posts) its
+  lead image, else its `banner:`, on the right of the card (below the text
+  on phones). With none, the card has no image and the title takes the
+  full width.
+
+  The item code sits before the title in red, like the menu rows' codes.
+  Dek spans the full card width below the woodcut + metadata row. An
+  artwork post without a dek shows its work line instead
+  (artwork-details.html: medium · dimensions · year), in the dek's style,
+  but in the title's column: under the title, beside the image, lined up
+  with the item code.
+  Provenance uses the S2 chip stamp (glyph + MADE · CODE).
+  Optional:
+    hide_date — true leaves out the date (see list-dates.html)
+{%- endcomment -%}
+{%- assign p_label = "" -%}
+{%- assign p_code  = "" -%}
+{%- if post.provenance == "by_hand"   %}{% assign p_label = "Made by hand"                   %}{% assign p_code = "BY HAND"       %}{% endif -%}
+{%- if post.provenance == "assisted"  %}{% assign p_label = "Made with machine collaboration" %}{% assign p_code = "WITH MACHINE"  %}{% endif -%}
+{%- if post.provenance == "by_machine"%}{% assign p_label = "Made by machine"                %}{% assign p_code = "BY MACHINE"    %}{% endif -%}
+
+<article class="menu-card">
+  <div class="menu-card__top">
+    {%- assign card_img = post.thumbnail -%}
+    {%- if card_img == nil and post.format == "artwork" -%}{%- assign card_img = post.images.first.src -%}{%- endif -%}
+    {%- assign card_img = card_img | default: post.banner -%}
+    {%- comment -%}
+      The thumbnail's alt: an artwork's own lead alt; "Cover of <title>" for
+      a zine's or script's cover; the banner's alt when the card shows the
+      banner.
+    {%- endcomment -%}
+    {%- assign card_alt = "" -%}
+    {%- if post.format == "artwork" -%}
+      {%- assign card_alt = post.images.first.alt -%}
+    {%- elsif post.thumbnail -%}
+      {%- if post.format == "zine" or post.format == "script" -%}
+        {%- capture card_alt %}Cover of {{ post.title }}{% endcapture -%}
+      {%- endif -%}
+    {%- elsif post.banner -%}
+      {%- assign card_alt = post.banner_alt | default: "" -%}
+    {%- endif -%}
+    {%- comment -%} A gated post (`content_warning: true`) shows no image: its pictures are behind the warning. {%- endcomment -%}
+    {%- if post.content_warning == true -%}{%- assign card_img = nil -%}{%- endif -%}
+    {%- assign card_note = post.dek | default: "" -%}
+    {%- assign card_work = false -%}
+    {%- if card_note == "" and post.format == "artwork" -%}
+      {%- capture card_note -%}{% include artwork-details.html post=post %}{%- endcapture -%}
+      {%- if card_note != "" -%}{%- assign card_work = true -%}{%- endif -%}
+    {%- endif %}
+    <div class="menu-card__content">
+      <div class="menu-card__head">
+        {%- if include.code %}<span class="menu-card__code">{{ include.code }}</span>{% endif %}
+        <a href="{{ post.url | relative_url }}" class="menu-card__title">{{ post.title }}</a>
+      </div>
+      {%- unless include.hide_date == true or include.hide_date == "true" %}
+      <div class="menu-card__date">{{ post.date | date: "%b&nbsp;%-d,&nbsp;%Y" }}</div>
+      {%- endunless %}
+      {%- if card_work %}
+      <p class="menu-card__body menu-card__work">{{ card_note }}</p>
+      {%- endif %}
+    </div>
+    {%- comment -%} The thumbnail sits after the text (on the right; below it on phones), so every card's code and title start at the same left edge. {%- endcomment -%}
+    {%- if card_img %}
+    {%- assign card_w = nil -%}
+    {%- if post.thumbnail == nil and post.format == "artwork" and post.images.first.widths -%}{%- assign card_w = post.images.first.widths.first -%}{%- endif -%}
+    {%- comment -%} An artwork's own lead on the media host also offers its WebP copy (format-artwork.html says when). {%- endcomment -%}
+    {%- assign card_webp = "" -%}
+    {%- if post.thumbnail == nil and post.format == "artwork" and post.images.first.webp != false -%}
+      {%- assign card_first = card_img | slice: 0, 1 -%}
+      {%- if card_first != "/" %}{% include media-url.html src=card_img w=card_w ext="webp" %}{% assign card_webp = mu_src %}{% endif -%}
+    {%- endif -%}
+    {%- include media-url.html src=card_img w=card_w %}
+    <picture>{% if card_webp != "" %}<source type="image/webp" srcset="{{ card_webp }}">{% endif %}<img class="menu-card__thumb" src="{{ mu_src }}" alt="{{ card_alt | escape }}" loading="lazy"></picture>
+    {%- endif %}
+  </div>
+  {%- if card_note != "" and card_work == false %}<p class="menu-card__body">{{ card_note }}</p>{% endif -%}
+  {%- if post.tags and post.tags.size > 0 -%}
+  <div class="menu-card__tags">
+    {%- for tag in post.tags -%}
+    <span class="menu-card__tag">{{ tag }}</span>
+    {%- endfor -%}
+  </div>
+  {%- endif -%}
+  <div class="menu-card__foot">
+    {%- if p_label %}<span class="menu-card__prov-label">{% include prov-mark.html provenance=post.provenance class="menu-card__prov-glyph" %} {{ p_label }}</span>{% endif -%}
+    <a href="{{ post.url | relative_url }}" class="menu-card__read-on">read on &rarr;</a>
+  </div>
+</article>

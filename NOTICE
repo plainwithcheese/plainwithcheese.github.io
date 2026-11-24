@@ -1,0 +1,13 @@
+The plainwithcheese name and burger marks: all rights reserved
+
+These files are the site's brand marks. They are not covered by the code
+license in LICENSE (BSD 3-Clause), or by the CC BY-NC 4.0 license on the
+writing and art:
+
+  favicon.svg, favicon.ico, apple-touch-icon.png   the favicons
+  assets/img/receipt-logo-ink-light.png,
+  assets/img/receipt-logo-ink-dark.png             the receipt logo
+  _includes/glyphs/plainwithcheese.svg             the end mark and dialogue glyph
+
+They identify this site. If you fork the code, replace them with your own.
+See README.md, "Licensing".

@@ -1,0 +1,16 @@
+{%- comment -%}
+  Feed version of format-artwork.html (feed.xml): the lead image with its
+  alt text, its caption, the work line (artwork-details.html), then the
+  other views of the work, each with its caption. Plain HTML with full URLs
+  and no scripts, for feed readers.
+
+  Param: post
+{%- endcomment -%}
+{%- assign fa_images = include.post.images -%}
+{%- assign fa_lead = fa_images.first -%}
+{%- capture fa_details -%}{% include artwork-details.html post=include.post %}{%- endcapture -%}
+{%- include media-url.html src=fa_lead.src -%}
+<p><img src="{{ mu_abs }}" alt="{{ fa_lead.alt | escape }}"></p>
+{%- if fa_lead.caption %}<p><em>{{ fa_lead.caption }}</em></p>{% endif -%}
+{%- if fa_details != "" %}<p>{{ fa_details }}</p>{% endif -%}
+{%- for fa in fa_images offset: 1 %}{% include media-url.html src=fa.src %}<p><img src="{{ mu_abs }}" alt="{{ fa.alt | escape }}">{% if fa.caption %}<br><em>{{ fa.caption }}</em>{% endif %}</p>{% endfor -%}

@@ -1,0 +1,604 @@
+---
+layout: default
+---
+{%- include validate-provenance.html -%}
+{%- include validate-format.html -%}
+{%- include validate-format-content.html -%}
+{%- comment -%}
+  A post in a hidden section (`hidden: true` in _data/categories.yml) fails
+  the build: the section isn't open, and its page isn't built.
+{%- endcomment -%}
+{%- assign hs_section = site.data.categories | where: "slug", page.category | first -%}
+{%- if hs_section.hidden -%}
+  {%- include errors/POST_IN_HIDDEN_SECTION-its-category-is-hidden-in-_data-categories.yml.html -%}
+{%- endif -%}
+{%- comment -%}
+  Content notes and the content-warning gate. `content_notes` is read and
+  checked in content-notes-data.html, and shows behind "[content notes]" under
+  the dek on any post that has it. `content_warning: true` gates the post: its
+  banner, format block, body and end mark stay hidden behind a warning box
+  until the reader chooses (assets/js/content-warning.js; the words are in
+  _data/content_warning.yml). The build fails if `content_warning` isn't true
+  or false, or on a gated post: without `content_notes` (the box points to
+  them), with `banner_position: only-banner` (no title block for
+  "[content notes]"), without a `description:`, or with one that isn't the dek
+  (an opening snippet would quote the hidden text in link previews). In
+  production it also fails while any of the gate's wording is still a "[TBD"
+  placeholder, or the message a draft.
+{%- endcomment -%}
+{%- include content-notes-data.html post=page -%}
+{%- assign cw = site.data.content_warning -%}
+{%- assign cw_on = false -%}
+{%- unless page.content_warning == nil or page.content_warning == true or page.content_warning == false -%}
+  {%- include errors/CONTENT_WARNING_MUST_BE_true_OR_false.html -%}
+{%- endunless -%}
+{%- if page.content_warning == true -%}
+  {%- assign cw_on = true -%}
+  {%- if cn_notes.size == 0 -%}
+    {%- include errors/CONTENT_WARNING_NEEDS_content_notes-the-warning-points-to-them.html -%}
+  {%- endif -%}
+  {%- if page.banner_position == "only-banner" -%}
+    {%- include errors/CONTENT_WARNING_WITH_banner_position-only-banner-the-title-block-must-show.html -%}
+  {%- endif -%}
+  {%- assign cw_desc = page.description | strip -%}
+  {%- assign cw_dek = page.dek | strip -%}
+  {%- if cw_desc == "" -%}
+    {%- include errors/CONTENT_WARNING_NEEDS_A_description-make-it-the-dek.html -%}
+  {%- endif -%}
+  {%- if cw_desc != cw_dek -%}
+    {%- include errors/CONTENT_WARNING_description-MUST-BE-THE-DEK-so-previews-never-quote-the-hidden-text.html -%}
+  {%- endif -%}
+  {%- if jekyll.environment == "production" -%}
+    {%- assign cw_wording = cw.off_post | append: "|" | append: cw.off_all | append: "|" | append: cw.turn_on | append: "|" | append: cw.feed_note -%}
+    {%- if cw_wording contains "[TBD" or cw.message_status == "draft" -%}
+      {%- include errors/CONTENT_WARNING_WORDING_IS_A_PLACEHOLDER-write-the-TBD-lines-in-_data-content_warning.yml.html -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endif -%}
+{%- comment -%}
+  The retired update fields: notes now go in `revisions:` (below), one per
+  revision, with its date.
+{%- endcomment -%}
+{%- if page.update_notes -%}
+  {%- include errors/UPDATE_NOTES_IS_RETIRED-give-each-revisions-entry-a-date-and-a-note.html -%}
+{%- endif -%}
+{%- if page.update_note -%}
+  {%- include errors/UPDATE_NOTE_IS_RETIRED-give-each-revisions-entry-a-date-and-a-note.html -%}
+{%- endif -%}
+{%- if page.updates -%}
+  {%- include errors/UPDATES_IS_RETIRED-give-each-revisions-entry-a-date-and-a-note.html -%}
+{%- endif -%}
+{%- comment -%}
+  Every published post except artwork needs a `description:`, the text
+  search engines and share cards show. Drafts, marked by
+  "(Draft)" in the title, are skipped until it comes off; unpublished posts
+  are never built, so they're skipped anyway. Pages that borrow this layout
+  (the local style guide) aren't posts and aren't checked.
+{%- endcomment -%}
+{%- if page.collection == "posts" and page.format != "artwork" -%}
+  {%- assign desc_check = page.description | strip -%}
+  {%- if desc_check == "" -%}
+    {%- unless page.title contains "(Draft)" -%}
+      {%- include errors/DESCRIPTION_MISSING-every-published-post-except-artwork-needs-a-description.html -%}
+    {%- endunless -%}
+  {%- endif -%}
+{%- endif -%}
+{%- comment -%}
+  Every published post except artwork needs a `dek` too: the line under the
+  title, on cards and menu
+  rows, and the start of a gated post's description. Artwork goes without
+  (its work line takes the dek's place); drafts ("(Draft)" in the title) are
+  let off, as for descriptions.
+{%- endcomment -%}
+{%- if page.collection == "posts" and page.format != "artwork" -%}
+  {%- assign dek_check = page.dek | strip -%}
+  {%- if dek_check == "" -%}
+    {%- unless page.title contains "(Draft)" -%}
+      {%- include errors/DEK_MISSING-every-published-post-except-artwork-needs-a-dek.html -%}
+    {%- endunless -%}
+  {%- endif -%}
+{%- endif -%}
+{%- comment -%} Post text is ragged right everywhere; a leftover `justify:` fails the build. {%- endcomment -%}
+{%- if page.justify != nil -%}
+  {%- include errors/JUSTIFY_IS_RETIRED-post-text-is-always-ragged-right-remove-justify.html -%}
+{%- endif -%}
+{%- comment -%}
+  Revisions: a post
+  revised after release keeps its date and filename, so it keeps its place
+  everywhere and never becomes today's special (that's the newest post by
+  `date` outside Desserts; todays-special.html). Each entry in `revisions:` is a released revision: its `date` and
+  a `note` on what changed. The label shows one "Updated" row, with the
+  latest date, and under it each revision's dated note, oldest first.
+  `last_modified_at` must be the latest revision's date, since the search
+  tags, the sitemap and the feed read it. The build fails if `revisions`
+  isn't a list, an entry has no date or no note, a date is earlier than the
+  post's, `last_modified_at` is missing or isn't the latest, or
+  `last_modified_at` is a later day than the post's with no revisions.
+{%- endcomment -%}
+{%- comment -%} `created:`, when the piece was made: read and checked in created-data.html, shown in the label below. {%- endcomment -%}
+{%- include created-data.html post=page -%}
+{%- assign rv_pub = page.date | date: "%Y-%m-%d" -%}
+{%- if page.revisions -%}
+  {%- if page.revisions.first == nil -%}
+    {%- include errors/REVISIONS_MUST_BE_A_LIST-each-entry-a-date-and-a-note-starting-with-a-dash.html -%}
+  {%- endif -%}
+  {%- assign rv_latest = "" -%}
+  {%- for rv in page.revisions -%}
+    {%- unless rv.date -%}
+      {%- include errors/REVISION_WITHOUT_A_DATE-write-each-entry-as-a-date-plus-a-note.html -%}
+    {%- endunless -%}
+    {%- assign rv_note = rv.note | strip -%}
+    {%- if rv_note == "" -%}
+      {%- include errors/REVISION_WITHOUT_A_NOTE-give-each-revision-a-note-on-what-changed.html -%}
+    {%- endif -%}
+    {%- assign rv_year = rv.date | date: "%Y" | plus: 0 -%}
+    {%- if rv_year < 2000 -%}
+      {%- include errors/REVISION_IS_NOT_A_DATE-write-each-date-as-YYYY-MM-DD.html -%}
+    {%- endif -%}
+    {%- assign rv_day = rv.date | date: "%Y-%m-%d" -%}
+    {%- if rv_day < rv_pub -%}
+      {%- include errors/REVISION_BEFORE_PUBLISHED-a-revision-date-is-earlier-than-the-post-date.html -%}
+    {%- endif -%}
+    {%- if rv_day > rv_latest -%}{%- assign rv_latest = rv_day -%}{%- endif -%}
+  {%- endfor -%}
+  {%- unless page.last_modified_at -%}
+    {%- include errors/REVISIONS_NEED_last_modified_at-set-it-to-the-latest-revision-date.html -%}
+  {%- endunless -%}
+  {%- assign rv_lm = page.last_modified_at | date: "%Y-%m-%d" -%}
+  {%- if rv_lm != rv_latest -%}
+    {%- include errors/REVISIONS_last_modified_at-MUST-BE-THE-LATEST-REVISION-DATE.html -%}
+  {%- endif -%}
+{%- elsif page.last_modified_at -%}
+  {%- assign rv_lm = page.last_modified_at | date: "%Y-%m-%d" -%}
+  {%- if rv_lm != rv_pub -%}
+    {%- include errors/LAST_MODIFIED_AT_WITHOUT_REVISIONS-add-a-revisions-entry-with-its-date-and-note.html -%}
+  {%- endif -%}
+{%- endif -%}
+{%- include provenance-data.html -%}
+{%- if page.series or page.part -%}{%- include series-data.html post=page -%}{%- endif -%}
+{%- if page.anthology or page.anthology_order -%}{%- include anthology-data.html slug=page.anthology post=page -%}{%- endif -%}
+{%- if page.kids_menu -%}{%- include kids-menu-data.html -%}{%- endif -%}
+
+{%- if page.category -%}
+{%- comment -%}
+  Item code and section above the title, e.g. "No. 21-D · Desserts"
+  (same code as the menus; see item-code.html). A post in an anthology gets
+  a second line in the same style: "From the anthology: <title>", linking
+  to the anthology's page. A post on the Kid's Menu gets that line for the
+  Kid's Menu instead ("From the Kid's Menu", kids-menu-data.html); if it's
+  in an anthology too, the anthology moves to a row in Kitchen Facts.
+{%- endcomment -%}
+{%- assign post_section = site.data.categories | where: "slug", page.category | first -%}
+{%- include item-code.html post=page -%}
+{%- comment -%} The form word (post-form.html): "No. 04-B · Burgers · short story". {%- endcomment -%}
+{%- include post-form.html post=page -%}
+<p class="post__kicker"><span class="post__item-code">No. {{ item_code }}</span> &middot; <a href="{{ '/menu/' | append: page.category | append: '/' | relative_url }}" class="post__kicker-link">{{ post_section.display | default: page.category }}</a>{% if post_form != "" %} &middot; <span class="post__form">{{ post_form }}</span>{% endif %}
+{%- if page.kids_menu %}<span class="post__anthology">{{ kids.from_label }} <a href="{{ kids.url | relative_url }}" class="post__kicker-link bracket-link">{% include bracket-text.html text=kids.title %}</a></span>{% elsif page.anthology %}<span class="post__anthology">From the anthology: <a href="{{ anth_url | relative_url }}" class="post__kicker-link bracket-link">{% include bracket-text.html text=anth.title %}</a></span>{% endif -%}
+</p>
+{%- endif -%}
+
+{%- if cw_on %}
+{%- comment -%} A stored "always serve" choice, applied before the page paints, so the warning never flashes (the same keys as content-warning.js). {%- endcomment %}
+<script>try{var a=localStorage.getItem("pwc-cw-all")==="off",p=localStorage.getItem("pwc-cw-post:{{ page.slug | default: page.url }}")==="off";if(a||p)document.documentElement.setAttribute("data-cw-off",a?"all":"post")}catch(e){}</script>
+{%- endif %}
+<article class="post post--{{ page.format }}{% if cw_on %} post--gated{% endif %}">
+  {%- assign banner_pos = page.banner_position | default: "only-title" -%}
+
+  {%- capture title_block -%}
+    <header class="post__title-block">
+      {%- comment -%}
+        Artwork titles: a parenthetical after the title, such as the
+        descriptor in "Untitled (blue study)", is set smaller and quieter in
+        this heading, so the title reads first. Everywhere else (cards,
+        menus, the page title, the feed) the title is plain text.
+      {%- endcomment -%}
+      {%- assign pt_main = page.title -%}
+      {%- assign pt_aside = "" -%}
+      {%- assign pt_end = page.title | slice: -1, 1 -%}
+      {%- if page.format == "artwork" and page.title contains " (" and pt_end == ")" -%}
+        {%- assign pt_main = page.title | split: " (" | first -%}
+        {%- assign pt_aside = page.title | remove_first: pt_main | strip -%}
+      {%- endif %}
+      <h1 class="post__title">{{ pt_main }}{% if pt_aside != "" %} <span class="post__title-aside">{{ pt_aside }}</span>{% endif %}</h1>
+      {%- if page.dek %}<p class="post__dek">{{ page.dek }}</p>{% endif -%}
+      {%- comment -%} Print only (hidden on screen): the byline, in the reading time's slot, which doesn't print. {%- endcomment %}
+      <p class="post__byline">by {{ site.title }}</p>
+      {%- comment -%} Print only, anthology posts: the anthology's name under the byline (plain text, so no address is printed). {%- endcomment -%}
+      {%- if page.anthology %}
+      <p class="post__collection">{{ site.data.diner.print.anthology_label }} {{ anth.title }}</p>
+      {%- endif %}
+      {%- include reading-time.html html=content -%}
+      {%- if page.series %}
+      <p class="post__series">Part {{ page.part }} of {{ ser_total }} &middot; <a href="{{ '/series/' | relative_url }}#{{ ser_anchor }}">{{ page.series }}</a></p>
+      {%- endif -%}
+      {%- comment -%}
+        "[content notes]": the post's content notes, closed until the reader
+        opens them, then on the same row, in the control's own type
+        ("[content notes] strong language, injury, …"). The control is the
+        browser's own <details>, empty, so it works with scripts off; CSS
+        shows the list (a sibling span) while it's open. The last two words of
+        the list are joined (&nbsp;), so a wrap never strands one. On a gated
+        post, opening it also shows the gate's three choices in the box below.
+        Print shows "contains: …" as a plain line instead
+        (.post__content-notes--print), on any post that has notes.
+      {%- endcomment -%}
+      {%- if cn_text != "" %}
+      {%- assign cn_words = cn_text | split: " " -%}
+      {%- assign cn_inline = cn_text -%}
+      {%- if cn_words.size > 1 -%}{%- assign cn_inline = cn_words | pop | join: " " | append: "&nbsp;" | append: cn_words.last -%}{%- endif %}
+      {%- comment -%}
+        On a gated post with an "always" choice in effect, the reveal also
+        carries a status line under the notes, in the same type, with the
+        bracketed reset control: shown only while
+        "[content notes]" is open, hidden with the notes.
+      {%- endcomment %}
+      <div class="post__contents-line">
+        <details class="post__contents{% if cw_on %} post__contents--gate{% endif %}"><summary class="post__contents-toggle bracket-link" aria-label="{{ cw.toggle_label }}">{% include bracket-text.html text=cw.toggle %}</summary></details>
+        <span class="post__contents-list">{{ cn_inline }}</span>
+        {%- if cw_on %}
+        {%- assign cw_reset = "[" | append: cw.turn_on | append: "]" %}
+        <span class="post__contents-off"><span class="cw-off__post">{{ cw.off_post }}</span><span class="cw-off__all">{{ cw.off_all }}</span> <button type="button" class="cw-off__on bracket-link" data-cw-on>{% include bracket-text.html text=cw_reset %}</button></span>
+        {%- endif %}
+      </div>
+      <p class="post__content-notes post__content-notes--print"><span class="post__content-notes-label">{{ cw.notes_label }}</span> {{ cn_text }}</p>
+      {%- endif -%}
+      {%- if page.stamp %}
+      <div class="prov-chip" title="provenance: {{ page.provenance }}">
+        {% include prov-mark.html provenance=page.provenance class="prov-chip__glyph" %}
+        <span>MADE &middot; {{ prov_code }}</span>
+      </div>
+      {% endif -%}
+    </header>
+  {%- endcapture -%}
+
+  {%- comment -%} The banner's address, by the media rule (media-url.html): a repo file or the media host. {%- endcomment -%}
+  {%- if page.banner -%}{%- include media-url.html src=page.banner -%}{%- assign pb_src = mu_src -%}{%- endif -%}
+  {%- capture banner_block -%}
+    {%- if page.banner -%}
+    <figure class="post__banner{% if cw_on %} gated{% endif %}"{% if cw_on %} style="--cw-img: url('{{ pb_src }}')"{% endif %}>
+      <img src="{{ pb_src }}" alt="{{ page.banner_alt | escape }}">
+      {%- if page.banner_caption %}<figcaption>{{ page.banner_caption }}</figcaption>{% endif -%}
+    </figure>
+    {%- endif -%}
+  {%- endcapture -%}
+
+  {%- comment -%}
+    The gate, on a gated post (the piece blurred, not hidden). Right under the
+    title block opens .cw-zone, which ends with the body (closed below), so it
+    holds the banner (unless it's above the title), the infobox, the format
+    block and the body, all .gated; the end mark, also .gated, sits after it,
+    so the sticky card stops where the text ends. Over it floats the card
+    (.cw, in .cw-layer): the message on two lines, centered, then, once
+    "[content notes]" above it is open, the three choices, stacked. "Serve
+    once" is a <details> of its own, so it works with scripts off;
+    content-warning.js adds the two "always" choices when the browser can
+    store them. With an "always" choice in effect, the card never shows; the
+    status line and reset sit in "[content notes]"'s reveal (above). The
+    blurring, hiding and showing is CSS (main.scss, "Content notes and the
+    content-warning gate"). "[content notes]" in the message is set like the
+    control it names, and the Kid's Menu's title links to its page while it
+    has pieces (plain text otherwise); the link comes before the choices in
+    keyboard order.
+  {%- endcomment -%}
+  {%- capture cw_box -%}
+    {%- if cw_on %}
+    {%- capture cw_ref %}<span class="cw__ref">{{ cw.toggle }}</span>{% endcapture %}
+    {%- assign cw_msg = cw.message | join: "<br>" | replace: cw.toggle, cw_ref %}
+    {%- include kids-menu-data.html -%}
+    {%- if kids_pieces.size > 0 and kids.title %}
+    {%- capture cw_kids %}<a href="{{ kids.url | relative_url }}">{{ kids.title }}</a>{% endcapture %}
+    {%- assign cw_msg = cw_msg | replace: kids.title, cw_kids %}
+    {%- endif %}
+    <div class="cw-zone">
+    <div class="cw-layer">
+      <section class="cw" data-cw data-cw-key="{{ page.slug | default: page.url }}" aria-label="{{ cw.label }}">
+        <p class="cw__message">{{ cw_msg }}</p>
+        <div class="cw__choices">
+          <details class="cw__serve"><summary class="cw__choice">{{ cw.serve_once }}</summary></details>
+          <button type="button" class="cw__choice" data-cw-always="post" hidden>{{ cw.serve_post }}</button>
+          <button type="button" class="cw__choice" data-cw-always="all" hidden>{{ cw.serve_all }}</button>
+        </div>
+      </section>
+    </div>
+    {%- endif -%}
+  {%- endcapture -%}
+
+  {%- if banner_pos == "banner-above-title" -%}
+    {{ banner_block }}
+    {{ title_block }}
+    {{ cw_box }}
+  {%- elsif banner_pos == "title-above-banner" -%}
+    {{ title_block }}
+    {{ cw_box }}
+    {{ banner_block }}
+  {%- elsif banner_pos == "only-banner" -%}
+    {{ banner_block }}
+  {%- elsif banner_pos == "wikipedia" -%}
+    {{ title_block }}
+    {{ cw_box }}
+    <aside class="post__infobox{% if cw_on %} gated{% endif %}"{% if cw_on and page.banner %} style="--cw-img: url('{{ pb_src }}')"{% endif %}>
+      {%- if page.banner %}
+      <figure>
+        <img src="{{ pb_src }}" alt="{{ page.banner_alt | escape }}">
+        {%- if page.banner_caption %}<figcaption>{{ page.banner_caption }}</figcaption>{% endif -%}
+      </figure>
+      {% endif -%}
+      {%- if page.infobox -%}
+      <table>
+        {%- for row in page.infobox %}
+        <tr><td class="ib-key">{{ row[0] }}</td><td>{{ row[1] }}</td></tr>
+        {%- endfor %}
+      </table>
+      {%- endif -%}
+    </aside>
+  {%- else -%}
+    {{ title_block }}
+    {{ cw_box }}
+  {%- endif %}
+
+  {%- comment -%} Format blocks that sit between the title and the body (in a .gated wrapper on a gated post). {%- endcomment -%}
+  {%- assign cw_fmt = false -%}
+  {%- if cw_on -%}{%- case page.format -%}{%- when "script", "zine", "recipe", "artwork" -%}{%- assign cw_fmt = true -%}{%- endcase -%}{%- endif %}
+  {%- if cw_fmt %}
+  {%- if page.format == "artwork" and page.images.first.src -%}{%- include media-url.html src=page.images.first.src w=page.images.first.widths.first -%}{%- endif %}
+  <div class="gated"{% if page.format == "artwork" and page.images.first.src %} style="--cw-img: url('{{ mu_src }}')"{% endif %}>
+  {%- endif %}
+  {%- if page.format == "script" %}
+  {% include format-script.html %}
+  {%- elsif page.format == "zine" %}
+  {% include format-zine.html %}
+  {%- elsif page.format == "recipe" %}
+  {% include format-recipe.html %}
+  {%- elsif page.format == "artwork" %}
+  {% include format-artwork.html %}
+  {%- endif %}
+  {%- if cw_fmt %}
+  </div>
+  {%- endif %}
+
+  <div class="post__body{% if cw_on %} gated{% endif %}">
+    {%- if page.format == "verse" %}
+    <div class="verse{% unless page.verse_align == 'left' %} verse--center{% endunless %}">
+    {% include verse-lines.html html=content scope="all" %}
+    </div>
+    {%- elsif content contains 'class="verse' %}
+    {% include verse-lines.html html=content scope="blocks" %}
+    {%- else %}
+    {{ content }}
+    {%- endif %}
+  </div>
+  {%- if cw_on %}
+  </div>{%- comment -%} .cw-zone: it ends with the post's text, so the card never rides past it. {%- endcomment -%}
+  {%- endif %}
+
+  {%- comment -%}
+    The end of a post, in order: the end mark; the dialogue links; the
+    "where next" links (back to the section's menu, then the series' parts on
+    a series post, or the section's older and newer posts otherwise); then,
+    below the rule, the footer and "How this was made". The link labels are
+    in _data/diner.yml (`post_end`).
+
+    End mark: the plainwithcheese glyph (a burger), centered under the body,
+    on posts in a section with `end_mark: true` in _data/categories.yml
+    (Burgers only) whose format is listed under `end_mark`
+    in _data/formats.yml (text, verse, dialogue). It's decorative, so hidden
+    from screen readers.
+  {%- endcomment -%}
+  {%- assign em_section = site.data.categories | where: "slug", page.category | first -%}
+  {%- if em_section.end_mark == true and site.data.formats.end_mark contains page.format %}
+  <div class="post__end-mark{% if cw_on %} gated{% endif %}" aria-hidden="true">{% include glyphs/plainwithcheese.svg %}</div>
+  {%- endif %}
+
+  {%- comment -%}
+    Standalone dialogues in _dialogues/ that belong to this post: their
+    `post:` names this post's slug, or, without `post:`, their filename
+    matches it. One gets a single link; several get a list by title.
+  {%- endcomment -%}
+  {%- assign post_dialogues = "" | split: "" -%}
+  {%- assign all_dialogues = site.dialogues | sort: "date" -%}
+  {%- for d in all_dialogues -%}
+    {%- assign d_post = d.post | default: d.slug -%}
+    {%- if d_post == page.slug -%}{%- assign post_dialogues = post_dialogues | push: d -%}{%- endif -%}
+  {%- endfor -%}
+  {%- if post_dialogues.size == 1 %}
+  <p class="post__dialogue-link"><a href="{{ post_dialogues[0].url | relative_url }}">read the full dialogue &rarr;</a></p>
+  {%- elsif post_dialogues.size > 1 %}
+  <div class="post__dialogue-link">
+    <p class="post__dialogue-label">full dialogues</p>
+    <ul class="post__dialogue-list">
+      {%- for d in post_dialogues %}
+      <li><a href="{{ d.url | relative_url }}">{{ d.title | default: d.slug }} &rarr;</a></li>
+      {%- endfor %}
+    </ul>
+  </div>
+  {%- endif %}
+
+  {%- comment -%}
+    What to read next. A series post keeps its parts'
+    previous and next. Any other post gets "More from <Section>": two other
+    pieces from its section, the closest in date (one newer and one older
+    when it can; at the newest, the two next-older; at the oldest, the two
+    next-newer), each with its title and dek (or an artwork's work line). If
+    the section has fewer than two others, the newest pieces elsewhere on the
+    menu fill in, under "More from the menu". A post's `pairs_well_with:
+    <slug>` takes the first slot, under "Pairs well with". Each of these
+    heads is an h2 (styled as before), so heading navigation reaches them.
+    Then the back-to-the-menu link. Labels in _data/diner.yml (`post_end`).
+  {%- endcomment -%}
+  {%- assign pe = site.data.diner.post_end -%}
+  {%- assign pe_section = site.data.categories | where: "slug", page.category | first -%}
+  {%- if page.series %}
+  <div class="post-next">
+    <nav class="series-nav" aria-label="{{ page.series | escape }}: other parts">
+      {%- if ser_prev %}<a class="series-nav__link series-nav__link--prev" href="{{ ser_prev.url | relative_url }}"><span class="series-nav__dir">&larr; part {{ ser_prev.part }}</span><span class="series-nav__title">{{ ser_prev.title }}</span></a>{% else %}<span></span>{% endif -%}
+      {%- if ser_next %}<a class="series-nav__link series-nav__link--next" href="{{ ser_next.url | relative_url }}"><span class="series-nav__dir">part {{ ser_next.part }} &rarr;</span><span class="series-nav__title">{{ ser_next.title }}</span></a>{% endif %}
+    </nav>
+  </div>
+  {%- else %}
+  {%- assign mf_posts = site.posts | where: "category", page.category -%}
+  {%- assign mf_n = mf_posts.size -%}
+  {%- assign mf_i = 0 -%}
+  {%- for mf_p in mf_posts -%}{%- if mf_p.url == page.url -%}{%- assign mf_i = forloop.index0 -%}{%- break -%}{%- endif -%}{%- endfor -%}
+  {%- assign mf_last = mf_n | minus: 1 -%}
+  {%- if mf_i == 0 -%}{%- assign mf_a = 1 -%}{%- assign mf_b = 2 -%}
+  {%- elsif mf_i == mf_last -%}{%- assign mf_a = mf_i | minus: 1 -%}{%- assign mf_b = mf_i | minus: 2 -%}
+  {%- else -%}{%- assign mf_a = mf_i | minus: 1 -%}{%- assign mf_b = mf_i | plus: 1 -%}{%- endif -%}
+  {%- assign mf_pair = nil -%}
+  {%- if page.pairs_well_with -%}
+    {%- assign mf_pair = site.posts | where: "slug", page.pairs_well_with | first -%}
+    {%- unless mf_pair -%}{%- include errors/PAIRS_WELL_WITH_NOT_FOUND-it-must-be-the-slug-of-a-post.html -%}{%- endunless -%}
+    {%- if mf_pair.url == page.url -%}{%- include errors/PAIRS_WELL_WITH_IS_THIS_POST-name-another-post.html -%}{%- endif -%}
+  {%- endif -%}
+  {%- assign mf_slots = 2 -%}
+  {%- if mf_pair -%}{%- assign mf_slots = 1 -%}{%- endif -%}
+  {%- assign mf_pick = "" | split: "" -%}
+  {%- for mf_k in (0..1) -%}
+    {%- if mf_k == 0 -%}{%- assign mf_x = mf_a -%}{%- else -%}{%- assign mf_x = mf_b -%}{%- endif -%}
+    {%- if mf_x >= 0 and mf_x < mf_n and mf_x != mf_i and mf_pick.size < mf_slots -%}
+      {%- assign mf_cand = mf_posts[mf_x] -%}
+      {%- unless mf_pair and mf_cand.url == mf_pair.url -%}{%- assign mf_pick = mf_pick | push: mf_cand -%}{%- endunless -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- assign mf_fill = "" | split: "" -%}
+  {%- assign mf_need = mf_slots | minus: mf_pick.size -%}
+  {%- if mf_need > 0 -%}
+    {%- for mf_p in site.posts -%}
+      {%- if mf_fill.size >= mf_need -%}{%- break -%}{%- endif -%}
+      {%- if mf_p.category != page.category and mf_p.url != page.url -%}
+        {%- unless mf_pair and mf_p.url == mf_pair.url -%}{%- assign mf_fill = mf_fill | push: mf_p -%}{%- endunless -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif %}
+  {%- if mf_pair or mf_pick.size > 0 or mf_fill.size > 0 %}
+  <nav class="more-from" aria-label="{{ pe.more_from_menu }}">
+    {%- if mf_pair %}
+    <h2 class="more-from__head">{{ pe.pairs_label }}</h2>
+    {% include more-from-item.html post=mf_pair %}
+    {%- endif %}
+    {%- if mf_pick.size > 0 %}
+    <h2 class="more-from__head">{{ pe.more_from | replace: "%section%", pe_section.display }}</h2>
+    {%- for mf_p in mf_pick %}
+    {% include more-from-item.html post=mf_p %}
+    {%- endfor %}
+    {%- endif %}
+    {%- if mf_fill.size > 0 %}
+    <h2 class="more-from__head">{{ pe.more_from_menu }}</h2>
+    {%- for mf_p in mf_fill %}
+    {% include more-from-item.html post=mf_p %}
+    {%- endfor %}
+    {%- endif %}
+  </nav>
+  {%- endif %}
+  {%- endif %}
+  {%- if pe_section %}
+  <p class="post-next__back">{%- assign pe_back = pe.back | replace: "%section%", pe_section.display -%}<a class="bracket-link" href="{{ '/menu/' | append: pe_section.slug | append: '/' | relative_url }}">{% include bracket-text.html text=pe_back %}</a></p>
+  {%- endif %}
+
+  {%- comment -%}
+    The label: the post's facts as a small table, one fact per row, each
+    said once: Created, above Published, on a post with `created:`
+    (created-data.html: the full date, or the year alone);
+    Published (`date`, the day it went up); Updated and its notes, on a
+    revised post only (one row, with the latest revision's date, then each
+    revision's dated note, oldest first, in the fine print's style; nothing
+    on a post with no revisions); Licensed (license-data.html: the post's,
+    else its section's, else the site default, linked to its deed); Made
+    (the provenance mark and its words). Under the rows, "How this was
+    made". Then "[print]" and "[copy link]". A real table with a header cell
+    per row, so screen readers read each name with its value (the notes are
+    tied to "Updated" by `headers`). Its title ("Kitchen Facts") is the
+    table's caption, set as an h2 inside it (styled as the caption), so
+    heading navigation reaches it; it also names the section. Row names, the
+    title and the note's form are in _data/diner.yml (`post_end.label`).
+  {%- endcomment -%}
+  {%- assign published_str = page.date | date: "%b %-d, %Y" -%}
+  {%- comment -%} The revisions, oldest first: each keyed by its date and its place in the list, so same-day revisions keep their written order. {%- endcomment -%}
+  {%- assign upd_keys = "" | split: "" -%}
+  {%- for rv in page.revisions -%}
+    {%- assign rv_idx = forloop.index0 | prepend: "000" | slice: -3, 3 -%}
+    {%- assign rv_key = rv.date | date: "%Y-%m-%d" | append: "|" | append: rv_idx -%}
+    {%- assign upd_keys = upd_keys | push: rv_key -%}
+  {%- endfor -%}
+  {%- assign upd_keys = upd_keys | sort -%}
+  {%- include license-data.html post=page -%}
+  {%- assign lb = pe.label %}
+  <section class="post-label" aria-labelledby="post-label-title">
+    <table class="post-label__table">
+      <caption class="post-label__caption"><h2 class="post-label__title" id="post-label-title">{{ lb.title }}</h2></caption>
+      <tbody>
+        {%- if created_str != "" %}
+        <tr><th scope="row">{{ lb.created }}</th><td>{{ created_str }}</td></tr>
+        {%- endif %}
+        <tr><th scope="row">{{ lb.published }}</th><td>{{ published_str }}</td></tr>
+        {%- if upd_keys.size > 0 %}
+        {%- assign upd_last = upd_keys.last | split: "|" | first %}
+        <tr><th scope="row" id="post-label-updated">{{ lb.updated }}</th><td>{{ upd_last | date: "%b %-d, %Y" }}</td></tr>
+        <tr class="post-label__updates"><td colspan="2" headers="post-label-updated">
+          <ul class="post-label__notes">
+            {%- for upd_key in upd_keys %}
+            {%- assign upd_parts = upd_key | split: "|" %}
+            {%- assign upd_i = upd_parts.last | plus: 0 %}
+            {%- assign upd_rv = page.revisions[upd_i] %}
+            {%- assign upd_date = upd_parts.first | date: "%b %-d, %Y" %}
+            <li>{{ lb.update_note | replace: "%date%", upd_date | replace: "%note%", upd_rv.note }}</li>
+            {%- endfor %}
+          </ul>
+        </td></tr>
+        {%- endif %}
+        {%- if page.kids_menu and page.anthology %}
+        <tr><th scope="row">{{ lb.anthology }}</th><td><a href="{{ anth_url | relative_url }}" class="bracket-link">{% include bracket-text.html text=anth.title %}</a></td></tr>
+        {%- endif %}
+        <tr><th scope="row">{{ lb.licensed }}</th><td>{% if page_license_url != "" %}<a href="{{ page_license_url }}" rel="license">{{ page_license }}</a>{% else %}{{ page_license }}{% endif %}</td></tr>
+        <tr><th scope="row">{{ lb.made }}</th><td>{% include prov-mark.html provenance=page.provenance class="post-label__mark" %} {{ prov_short }}</td></tr>
+      </tbody>
+    </table>
+    {%- if page.provenance_note %}
+    <div class="post-label__fine">
+      {%- comment -%} Run-in label: "How this was made:" starts the note's first paragraph; if the note opens with something else (a list), the label sits alone. {%- endcomment -%}
+      {%- assign prov_note_html = page.provenance_note | markdownify | strip -%}
+      {%- capture prov_note_label %}<span class="post-label__fine-label">How this was made:</span> {% endcapture -%}
+      {%- assign prov_note_start = prov_note_html | slice: 0, 3 %}
+      {%- if prov_note_start == "<p>" %}
+      {%- assign prov_note_open = "<p>" | append: prov_note_label %}
+      {{ prov_note_html | replace_first: "<p>", prov_note_open }}
+      {%- else %}
+      <p>{{ prov_note_label }}</p>
+      {{ prov_note_html }}
+      {%- endif %}
+    </div>
+    {%- endif %}
+  </section>
+  {%- comment -%}
+    "[print]" opens the print dialog (the script at the end of this layout)
+    and "[copy link]" copies the post's address (assets/js/copy-link.js,
+    which also shows them). Both need JavaScript: without it their wrapper
+    stays hidden. "[follow]" is a plain link to the Feed page, so it shows
+    either way. The whole row is hidden in print. All follow the
+    bracketed-link rule (bracket-text.html).
+  {%- endcomment %}
+  <div class="post-tools">
+    <span class="post-tools__js" data-needs-js hidden>
+    <button type="button" class="post-tool print-btn bracket-link" aria-label="{{ site.data.diner.print.button_label }}" data-tip="{{ site.data.diner.print.button_tip }}">{% include bracket-text.html text=site.data.diner.print.button_text %}</button>
+    <button type="button" class="post-tool copy-btn bracket-link" aria-label="{{ site.data.diner.copy_link.label }}" data-tip="{{ site.data.diner.copy_link.tip }}"><span class="copy-btn__idle">{% include bracket-text.html text=site.data.diner.copy_link.text %}</span><span class="copy-btn__done" hidden>{% include bracket-text.html text=site.data.diner.copy_link.copied %}</span><span class="copy-btn__fail" hidden>{% include bracket-text.html text=site.data.diner.copy_link.failed %}</span></button>
+    <span class="visually-hidden" role="status"></span>
+    </span>
+    <a class="post-tool bracket-link" href="{{ '/feed/' | relative_url }}">{% include bracket-text.html text=site.data.diner.follow.text %}</a>
+    {%- if cw_on %}
+    {%- comment -%} A second reset, at the end of a gated post: the same as the one in "[content notes]"'s reveal, shown only while an "always" choice is in effect (CSS; the choice needs scripts, so it never shows without them), and hidden in print with the rest of the row. {%- endcomment %}
+    <button type="button" class="post-tool bracket-link cw-reset-end" data-cw-on>{% include bracket-text.html text=cw_reset %}</button>
+    {%- endif %}
+  </div>
+
+  {%- comment -%} Print only (hidden on screen): "From the kitchen of: <the site's address>", from site.url without its scheme. Plain text, so its address isn't printed a second time. {%- endcomment %}
+  {%- assign print_address = site.url | remove_first: "https://" | remove_first: "http://" | split: "/" | first %}
+  <p class="post__print-address">{{ site.data.diner.print.address_label }} {{ print_address }}</p>
+</article>
+<script>document.querySelectorAll(".post-tools .print-btn").forEach(function (b) { b.addEventListener("click", function () { window.print(); }); });</script>
+<script src="{{ '/assets/js/copy-link.js' | relative_url }}"></script>
+{%- if cw_on %}
+<script src="{{ '/assets/js/content-warning.js' | relative_url }}"></script>
+{%- endif %}
+{%- comment -%} The optional printing reveal for printouts given `{: .printout--reveal}` (assets/js/printout.js). {%- endcomment -%}
+{%- if content contains 'printout--reveal' %}
+<script type="module" src="{{ '/assets/js/printout.js' | relative_url }}"></script>
+{%- endif %}
